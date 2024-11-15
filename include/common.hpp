@@ -18,10 +18,8 @@ typedef struct
     Point2f right_bottom;
 }four_corners_t;
 
-extern four_corners_t corners;
-
-void CalcCorners(const Mat& H, const Mat& src);
-void OptimizeSeam(Mat& img1, Mat& trans, Mat& dst);
+void CalcCorners(const Mat& H, const Mat& src, four_corners_t& corners);
+void OptimizeSeam(Mat& img1, Mat& trans, Mat& dst, four_corners_t& corners);
 void showimg(string name, cv::Mat img);
 
 #endif  // COMMON_HPP

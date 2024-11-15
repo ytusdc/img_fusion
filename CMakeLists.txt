@@ -30,7 +30,7 @@ include_directories(${INCLUDE_DIRS})
 
 #生成程序
 add_executable(${PROJECT_NAME}
-        main_orb.cpp
+        main_surf.cpp
         include/common.cpp
         )
 

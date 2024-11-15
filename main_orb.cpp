@@ -5,8 +5,6 @@
 using namespace cv;
 using namespace std;
 
-four_corners_t corners;
-
 int main(int argc, char *argv[])
 {
     // Mat image01 = imread("t1.jpg", 1);    //右图
@@ -75,16 +73,18 @@ int main(int argc, char *argv[])
     //Mat   homo=getPerspectiveTransform(imagePoints1,imagePoints2);  
     cout << "变换矩阵为：\n" << homo << endl << endl; //输出映射矩阵      
 
+    four_corners_t corners_t;
+
     //计算配准图的四个顶点坐标
-    CalcCorners(homo, image01);
-    cout << "left_top:" << corners.left_top << endl;
-    cout << "left_bottom:" << corners.left_bottom << endl;
-    cout << "right_top:" << corners.right_top << endl;
-    cout << "right_bottom:" << corners.right_bottom << endl;
+    CalcCorners(homo, image01, corners_t);
+    cout << "left_top:" << corners_t.left_top << endl;
+    cout << "left_bottom:" << corners_t.left_bottom << endl;
+    cout << "right_top:" << corners_t.right_top << endl;
+    cout << "right_bottom:" << corners_t.right_bottom << endl;
 
     //图像配准  
     Mat imageTransform1, imageTransform2;
-    warpPerspective(image01, imageTransform1, homo, Size(MAX(corners.right_top.x, corners.right_bottom.x), image02.rows));
+    warpPerspective(image01, imageTransform1, homo, Size(MAX(corners_t.right_top.x, corners_t.right_bottom.x), image02.rows));
     //warpPerspective(image01, imageTransform2, adjustMat*homo, Size(image02.cols*1.3, image02.rows*1.8));
     // showimg("直接经过透视矩阵变换", imageTransform1);
 
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 
     // showimg("b_dst", dst);
 
-    OptimizeSeam(image02, imageTransform1, dst);
+    OptimizeSeam(image02, imageTransform1, dst, corners_t);
     // showimg("dst", dst);
     imwrite("dst_111100.jpg", dst);
     // waitKey();
@@ -116,7 +116,6 @@ int main(int argc, char *argv[])
     // 输出结果
     std::cout << "Time taken by function: " << duration.count() << " milliseconds" << std::endl;
 
-    
     return 0;
 }
 

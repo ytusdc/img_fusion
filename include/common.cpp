@@ -1,6 +1,6 @@
 #include "common.hpp"
 
-void CalcCorners(const Mat& H, const Mat& src)
+void CalcCorners(const Mat& H, const Mat& src, four_corners_t& corners)
 {
     double v2[] = { 0, 0, 1 };//左上角
     double v1[3];//变换后的坐标值
@@ -47,7 +47,7 @@ void CalcCorners(const Mat& H, const Mat& src)
 }
 
 //优化两图的连接处，使得拼接自然
-void OptimizeSeam(Mat& img1, Mat& trans, Mat& dst)
+void OptimizeSeam(Mat& img1, Mat& trans, Mat& dst, four_corners_t& corners)
 {
     int start = MIN(corners.left_top.x, corners.left_bottom.x);//开始位置，即重叠区域的左边界  
 

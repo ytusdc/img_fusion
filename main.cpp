@@ -1,26 +1,33 @@
 #include <iostream>  
 #include <chrono>
-#include "include/stitching.hpp"
+#include "include/stitch.hpp"
 
 using namespace cv;
 using namespace std;
 
+
 int main(int argc, char *argv[])
 {
 
-    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
-    Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
+    string front_path = "./images/resize_10.jpg";       // 前
+    string right_front_path = "./images/resize_12.jpg"; // 右前 
+    string right_back_path = "./images/resize_13.jpg";  // 右后
+    string back_path = "./images/resize_14.jpg";        // 后 
+    string left_back_path = "./images/resize_15.jpg";   // 左后 
+    string left_front_path  = "./images/resize_16.jpg"; // 左前
 
-    // cv::Mat mat_dst = stitching_orb(left_img, right_img);
+    auto  stitch_cls = new Stitch_Custom();
 
-    cv::Mat mat_surf = stitching_orb(left_img, right_img);
+    std::vector<cv::Mat> images_vec;
 
-    if (mat_surf.empty()) {
-        std::cout << "Mat is empty." << std::endl;
-        return 0;
-    }
-
-    imwrite("dst_surf.jpg", mat_surf);
+    images_vec.push_back(cv::imread(front_path));
+    images_vec.push_back(cv::imread(right_front_path));
+    images_vec.push_back(cv::imread(right_back_path));
+    images_vec.push_back(cv::imread(back_path));
+    images_vec.push_back(cv::imread(left_back_path));
+    images_vec.push_back(cv::imread(left_front_path));
+    cv::Mat result = stitch_cls->hconcat(images_vec);
+    imwrite("result.jpg", result);
 
 }
 

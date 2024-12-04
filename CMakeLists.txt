@@ -31,8 +31,7 @@ include_directories(${INCLUDE_DIRS})
 #生成程序
 add_executable(${PROJECT_NAME}
         main.cpp
-        include/common.cpp
-        include/stitching.cpp
+        include/stitch.cpp
         )
 
 # 将链接目录添加到target

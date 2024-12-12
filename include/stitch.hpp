@@ -63,10 +63,9 @@ class Stitch_Custom {
         cv::Mat stitch_hard(std::vector<ImgInfo> imginfo_vec);
 
     public:
-        int max_up_offset_sum = 0;   // 最大向上累计偏移
+ 
         int down_offset_sum = 0;
         int offset_sum = 0;
-        std::vector<int> img_height_vec; 
         int max_height = 0;  // 以第一张图片左上角x为标准，加入偏移后的图片高度
         int sum_width = 0;   // 最终拼接后的图片宽度
 };

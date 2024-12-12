@@ -236,4 +236,67 @@ cv::Mat stitching_orb(cv::Mat& img_left, cv::Mat& img_right)
 }
 
 
+cv::Mat stitching_sift(cv::Mat& img_left, cv::Mat& img_right) {
+
+
+
+    //灰度图转换  
+    Mat img1, img2;
+    cvtColor(img_right, img1, cv::COLOR_RGB2GRAY);
+    cvtColor(img_left, img2, cv::COLOR_RGB2GRAY);
+
+    // img1 = img_right;
+    // img2 = img_left;
+
+    // img1 = img_left;
+    // img2 = img_right;
+
+        // 初始化SIFT检测器和描述符提取器
+    cv::Ptr<cv::SIFT> sift = cv::SIFT::create();
+    
+    // cv::Ptr<cv::ORB>
+
+    // 检测关键点和计算描述符
+    vector<KeyPoint> keypoints1, keypoints2;
+    Mat descriptors1, descriptors2;
+    sift->detectAndCompute(img1, noArray(), keypoints1, descriptors1);
+    sift->detectAndCompute(img2, noArray(), keypoints2, descriptors2);
+
+    // 匹配描述符
+    BFMatcher matcher(NORM_L2); // SIFT uses L2 norm
+    vector<DMatch> matches;
+    matcher.match(descriptors1, descriptors2, matches);
+
+    // 使用RANSAC找到最佳单应矩阵
+    vector<Point2f> points1, points2;
+    for (size_t i = 0; i < matches.size(); i++) {
+        points1.push_back(keypoints1[matches[i].queryIdx].pt);
+        points2.push_back(keypoints2[matches[i].trainIdx].pt);
+    }
+    Mat H = findHomography(points1, points2, RANSAC);
+
+
+    auto start = std::chrono::steady_clock::now();
+    // 使用单应矩阵进行图像拼接
+    Mat result;
+    warpPerspective(img2, result, H, Size(img1.cols + img2.cols, max(img1.rows, img2.rows)));
+    Mat half(result, Rect(0, 0, img1.cols, img1.rows));
+    img1.copyTo(half);
+
+            // 记录结束时间
+    auto end = std::chrono::steady_clock::now();
+    // 计算耗时
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    // auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+    // 输出结果
+    std::cout << "Time taken by function: " << duration.count() << " milliseconds" << std::endl;
+
+
+    cv::namedWindow("Stitched Image", cv::WINDOW_NORMAL);
+    // 显示结果
+    imshow("Stitched Image", half);
+    waitKey(0);
+
+    return result;
+}
 

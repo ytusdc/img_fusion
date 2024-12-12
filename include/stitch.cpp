@@ -45,4 +45,44 @@ cv::Mat Stitch_Custom::hconcat(const vector<Mat>& images) {
     return result;
 }
 
+cv::Mat Stitch_Custom::stitch_hard(std::vector<ImgInfo> imginfo_vec) {
+    int sum_offset = 0;
+    int out_width = 0;
+    for (const auto& imginfo : imginfo_vec) {
+        int crop_height = imginfo.crop_height;
+        int crop_width = imginfo.crop_width;
+        int up_offset = imginfo.up_offset;
+        sum_offset += up_offset;
+        max_up_offset_sum =  max_up_offset_sum > sum_offset ? max_up_offset_sum : sum_offset;
+        int offset_height = crop_height - sum_offset;
+        max_height = max_height > offset_height ?  max_height : offset_height;
+        out_width += crop_width;
+    }
 
+    int out_height = max_up_offset_sum + max_height;
+    int current_width = 0;
+    cv::Mat img_out = cv::Mat::zeros(out_height, out_width, CV_8UC3);
+
+    std::cout<< "out_height = " << out_height << std::endl;
+    std::cout<< "out_width = " << out_width << std::endl;
+
+    int sum_offset_2 = 0;
+    for (const auto& imginfo : imginfo_vec) {
+        int rect_top_left_x = current_width;
+
+        int up_offset = imginfo.up_offset;
+        sum_offset_2 += up_offset;
+        int rect_top_left_y = max_up_offset_sum - sum_offset_2;
+
+        std::cout<< "rect_top_left_x = " << rect_top_left_x << std::endl;
+        std::cout<< "rect_top_left_y = " << rect_top_left_y << std::endl;
+        std::cout<< " ************ " << std::endl;
+
+        cv::Rect roi_rect = cv::Rect(rect_top_left_x, rect_top_left_y, imginfo.img.cols, imginfo.img.rows);
+        imginfo.img.copyTo(img_out(roi_rect));
+        current_width += imginfo.crop_width;
+    }
+
+    return img_out;
+    //  cv::imshow("img_out", img_out);
+}

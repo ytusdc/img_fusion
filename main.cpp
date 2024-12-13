@@ -2,292 +2,148 @@
 #include <iostream>
 #include <string>
 #include <vector>
-// #include <opencv2/opencv.hpp>
-// #include <opencv2/core/core.hpp>
-// #include <opencv2/highgui.hpp>
-// #include <opencv2/stitching.hpp>
-// #include <opencv2/features2d/features2d.hpp>
-// #include <opencv2/xfeatures2d/nonfree.hpp>
 
-#include <opencv2/opencv.hpp> 
-#include <opencv2/highgui/highgui.hpp>   
-#include <opencv2/xfeatures2d.hpp>
-#include <opencv2/features2d.hpp> 
-
-#include "include/stitching.hpp"
-
-
+#include <iostream>
+#include <fstream>
+#include <string>
+#include "opencv2/opencv_modules.hpp"
+#include <opencv2/core/utility.hpp>
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/stitching/detail/autocalib.hpp"
+#include "opencv2/stitching/detail/blenders.hpp"
+#include "opencv2/stitching/detail/timelapsers.hpp"
+#include "opencv2/stitching/detail/camera.hpp"
+#include "opencv2/stitching/detail/exposure_compensate.hpp"
+#include "opencv2/stitching/detail/matchers.hpp"
+#include "opencv2/stitching/detail/motion_estimators.hpp"
+#include "opencv2/stitching/detail/seam_finders.hpp"
+#include "opencv2/stitching/detail/warpers.hpp"
+#include "opencv2/stitching/warpers.hpp"
+#include "opencv2/xfeatures2d/nonfree.hpp"
+ 
 using namespace cv;
 using namespace std;
-
-
-// void main_v2(string img_path_1, string img_path_2) {
-
-void main_v2(cv::Mat img1, cv::Mat img2) {
-
-
-	// Mat img1 = imread("img/img1.png", IMREAD_COLOR);
-	// Mat img2 = imread("img/img2.png", IMREAD_COLOR);
-
-    // Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
-    // Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
-
-    // cv::Mat img1 = cv::imread("./images/resize_12.jpg", IMREAD_COLOR);
-    // cv::Mat img2 = cv::imread("./images/resize_13.jpg", IMREAD_COLOR);
-
-    // cv::Mat img1 = cv::imread(img_path_1, IMREAD_COLOR);
-    // cv::Mat img2 = cv::imread(img_path_2, IMREAD_COLOR);
-
-    std::vector<Mat> imgs;
-
-    //step 2. sift feature detect
-	printf("extract sift features \n");
-	std::vector<KeyPoint> keyPoint1, keyPoint2;
-	Ptr<Feature2D> siftFeature = cv::SIFT::create(); //The number of best features to retain
+using namespace cv::detail;
  
-	siftFeature->detect(img1, keyPoint1);
-	siftFeature->detect(img2, keyPoint2);
- 
-	Mat descor1, descor2;
-	siftFeature->compute(img1, keyPoint1, descor1);
-	siftFeature->compute(img2, keyPoint2, descor2);
- 
-    Mat feature_img1, feature_img2;
-	drawKeypoints(img1, keyPoint1, feature_img1, Scalar(0, 255, 0), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-	drawKeypoints(img2, keyPoint2, feature_img2, Scalar(0, 255, 0), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
- 
-	// imshow("img1", feature_img1);
-	// imshow("img2", feature_img2);
-    // waitKey(0);
-
-
-        //step 3. instantiate mathcher
-	FlannBasedMatcher matcher;
-	std::vector<DMatch> matches;
-	matcher.match(descor1, descor2, matches);
-	// printff("original match numbers: " + std::to_string(matches.size()));
- 
-	Mat oriMatchRes;
-	drawMatches(img1, keyPoint1, img2, keyPoint2, matches, oriMatchRes, Scalar(0, 255, 0), Scalar::all(-1));
-	// imshow("orign match img", oriMatchRes);
-
-
-
-        //step 4. select better match
-	double sum = 0;
-	double maxDist = 0;
-	double minDist = 0;
-	for (auto &match : matches)
-	{
-		double dist = match.distance;
-		maxDist = max(maxDist, dist);
-		minDist = min(minDist, dist);
-	}
-	// printff("max distance: " + std::to_string(maxDist));
-	// printff("min distance: " + std::to_string(minDist));
- 
-	std::vector<DMatch> goodMatches;
-	double threshold = 0.5;
-	for (auto &match : matches)
-	{
-		if (match.distance < threshold * maxDist)
-			goodMatches.emplace_back(match);
-	}
-
-
-    // step 5. RANSAC delete mismatched feature points
-    //step 5.1 align feature points and convet to float
-	std::vector<KeyPoint> R_keypoint01, R_keypoint02;
-	for (auto &match : goodMatches)
-	{
-		R_keypoint01.emplace_back(keyPoint1[match.queryIdx]);
-		R_keypoint02.emplace_back(keyPoint2[match.trainIdx]);
-	}
-	std::vector<Point2f> p01, p02;
-	for (int i = 0; i < goodMatches.size(); ++i)
-	{
-		p01.emplace_back(R_keypoint01[i].pt);
-		p02.emplace_back(R_keypoint02[i].pt);
-	}
- 
-	//step 5.2 compute homography
-	std::vector<uchar> RansacStatus;
-	Mat fundamental = findHomography(p01, p02, RansacStatus, cv::RANSAC);
-	Mat dst;
-	warpPerspective(img1, dst, fundamental, Size(img1.cols, img1.rows));
-	imwrite("epipolarimage.jpg", dst);
-
-
- 
-	//step 5.3  delete mismatched points
-	std::vector<KeyPoint> RR_keypoint01, RR_keypoint02;
-	std::vector<DMatch> RR_matches;
-	int idx = 0;
-	for (int i = 0; i < goodMatches.size(); ++i)
-	{
-		if (RansacStatus[i] != 0)
-		{
-			RR_keypoint01.emplace_back(R_keypoint01[i]);
-			RR_keypoint02.emplace_back(R_keypoint02[i]);
-			goodMatches[i].queryIdx = idx;
-			goodMatches[i].trainIdx = idx;
-			RR_matches.emplace_back(goodMatches[i]);
-			++idx;
-		}
-	}
-	// printff("refine match pairs : " + std::to_string(RR_matches.size()));
-	Mat imgRRMatches;
-	drawMatches(img1, RR_keypoint01, img2, RR_keypoint02, RR_matches, imgRRMatches, Scalar(0, 255, 0), Scalar::all(-1));
-	// imshow("final match", imgRRMatches);
-    	imwrite("final_match", imgRRMatches);
-
-    //step 6. stitch
-	Mat finalImg = dst.clone();
-	img2.copyTo(finalImg(Rect(0, 0, img2.cols, img2.rows)));
-	// imshow("stitching image", finalImg);
-
-    imwrite("stitchingimage.jpg", finalImg);
-
-    waitKey(0);
-    return;
-}
-
-
-int main_3()
+int main()
 {
+	//获取图片路径
+	vector<String>image_names;  //所有图片名字
+	String filepath = "/home/ytusdc/codes_zkyc/img_fusion/img_test";   //图片存储路径
+	glob(filepath, image_names, false);
+	size_t num_images = image_names.size(); //图片数量
+	cout << "检索到的图片为：" << endl;
+	for (int i = 0; i < num_images; ++i)
+	{
+		cout << "Image #" <<i+1<<": "<< image_names[i]<<endl;
+	}
+	cout << endl;
+ 
+	//存储图像、尺寸、特征点
+	vector<ImageFeatures> features(num_images);  //存储图像特征点
+	vector<Mat> images(num_images); //存储所有图像
+	vector<Size> images_sizes(num_images); //存储图像的尺寸
+	Ptr<Feature2D> featurefinder = cv::SIFT::create();//特征点检测方法
+	for (int i = 0; i < num_images; ++i)
+	{
+		images[i] = cv::imread(samples::findFile(image_names[i]));//读取每一张图片
+		images_sizes[i] = images[i].size();
+		computeImageFeatures(featurefinder, images[i], features[i]);    //计算图像特征
+		//features[i].img_idx = i;
+		cout << "image #" << i + 1 << "特征点为: " << features[i].keypoints.size() << " 个"<<"  "<< "尺寸为: " << images_sizes[i] << endl;
+	}
+	cout << endl;
+ 
+	//图像特征点匹配
+	vector<MatchesInfo> pairwise_matches; //表示特征匹配信息变量
+	Ptr<FeaturesMatcher> matcher = makePtr<BestOf2NearestMatcher>(false, 0.3f, 6, 6); //定义特征匹配器，2NN方法
+	(*matcher)(features, pairwise_matches);  //进行特征匹配
+ 
+	//预估相机参数
+	Ptr<Estimator> estimator;
+	estimator = makePtr<HomographyBasedEstimator>();  //水平估计
+	vector<CameraParams> cameras;  //相机参数素组
+	(*estimator)(features, pairwise_matches, cameras);  //得到相机参数
+	cout << "预估相机参数:" << endl;
+	for (size_t i = 0; i < cameras.size(); ++i)
+	{
+		Mat R;
+		cameras[i].R.convertTo(R, CV_32F);
+		cameras[i].R = R;
+		cout << "camera #" << i + 1 << ":\n内参数矩阵K:\n" << cameras[i].K() << "\n旋转矩阵R:\n" << cameras[i].R << "\n焦距focal: " << cameras[i].focal << endl;
+	}
+	cout << endl;
+ 
+	//光束平差，精确相机参数
+	Ptr<detail::BundleAdjusterBase> adjuster;
+	adjuster = makePtr<detail::BundleAdjusterRay>();
+	(*adjuster)(features, pairwise_matches, cameras);
+	cout << "精确相机参数" << endl;
+	for (size_t i = 0; i < cameras.size(); ++i)
+	{
+		Mat R;
+		cameras[i].R.convertTo(R, CV_32F);
+		cameras[i].R = R;
+		cout << "camera #" << i + 1 << ":\n内参数矩阵K:\n" << cameras[i].K() << "\n旋转矩阵R:\n" << cameras[i].R << "\n焦距focal: " << cameras[i].focal << endl;
+	}
+	cout << endl;
+ 
+	//波形矫正
+	vector<Mat> mat;
+	for (size_t i = 0; i < cameras.size(); ++i)
+		mat.push_back(cameras[i].R);
+	waveCorrect(mat, WAVE_CORRECT_HORIZ); //水平校正
+	for (size_t i = 0; i < cameras.size(); ++i)
+		cameras[i].R = mat[i];
+	cout << endl;
+ 
+	//创建mask图像
+	vector<Mat> masks(num_images);
+	for (int i = 0; i < num_images; ++i)
+	{
+		masks[i].create(images[i].size(), CV_8U);
+		masks[i].setTo(Scalar::all(255));
+	}
+ 
+	//图像、掩码变换
+	vector<Mat> masks_warp(num_images);  //mask扭曲
+	vector<Mat> images_warp(num_images); //图像扭曲
+	vector<Point> corners(num_images);   //图像左角点
+	vector<Size> sizes(num_images);		 //图像尺寸
+	Ptr<WarperCreator> warper_creator=makePtr<cv::CylindricalWarper>();  //柱面投影
+	Ptr<RotationWarper> warper = warper_creator->create(static_cast<float>(cameras[0].focal));  //因为图像焦距都一样
+	for (int i = 0; i < num_images; ++i)
+	{
+		Mat K;
+		cameras[i].K().convertTo(K, CV_32F);
+		corners[i] = warper->warp(images[i], K, cameras[i].R, INTER_LINEAR, BORDER_REFLECT, images_warp[i]);  //扭曲图像images->images_warp
+		sizes[i] = images_warp[i].size();
+		warper->warp(masks[i], K, cameras[i].R, INTER_NEAREST, BORDER_CONSTANT, masks_warp[i]);  //扭曲masks->masks_warped
+	}
+	for (int i = 0; i < num_images; ++i)
+	{
+		cout << "Image #" << i + 1 << "  corner: " << corners[i] << "  " << "size: " << sizes[i] << endl;
+	}
+	cout << endl;
+ 
+	//图像融合
+	Ptr<Blender> blender; //定义图像融合器
+	blender = Blender::createDefault(Blender::NO, false); //简单融合方法
+	blender->prepare(corners, sizes);  //生成全景图像区域
+	for (int i = 0; i < num_images; ++i)
+	{
+		images_warp[i].convertTo(images_warp[i], CV_16S);
+		blender->feed(images_warp[i], masks_warp[i], corners[i]);  //处理图像 初始化数据
+	}
+	Mat result, result_mask;
+	blender->blend(result, result_mask);  //blend( InputOutputArray dst, InputOutputArray dst_mask  )混合并返回最后的pano。
+	imwrite("result.jpg", result);
 
-    cv::Mat img_10 = cv::imread("./images/resize_10.jpg");
-    cv::Mat img_11 = cv::imread("./images/resize_11.jpg");
-    cv::Mat img_12 = cv::imread("./images/resize_12.jpg");
-    cv::Mat img_13 = cv::imread("./images/resize_13.jpg");
-    cv::Mat img_14 = cv::imread("./images/resize_14.jpg");
-    cv::Mat img_15 = cv::imread("./images/resize_15.jpg");
-    cv::Mat img_16 = cv::imread("./images/resize_16.jpg");
-
-    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
-    Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
-
-    // Step 1: Load images
-    Mat img1 = left_img;
-    Mat img2 = right_img;
-
-    if (img1.empty() || img2.empty()) {
-        std::cerr << "Error: Could not load one or both images." << std::endl;
-        return -1;
-    }
-
-    // Step 2: Detect keypoints and compute descriptors
-    Ptr<SIFT> sift = SIFT::create();
-    std::vector<KeyPoint> keypoints1, keypoints2;
-    Mat descriptors1, descriptors2;
-
-    sift->detectAndCompute(img1, noArray(), keypoints1, descriptors1);
-    sift->detectAndCompute(img2, noArray(), keypoints2, descriptors2);
-
-    // Step 3: Match features
-    BFMatcher matcher(NORM_L2);
-    std::vector<DMatch> matches;
-    matcher.match(descriptors1, descriptors2, matches);
-
-    // Sort matches by score
-    std::sort(matches.begin(), matches.end());
-    // Remove not so good matches
-    const float ratio = 0.75f; // Keep top 75% matches
-    const int numGoodMatches = matches.size() * ratio;
-    matches.erase(matches.begin() + numGoodMatches, matches.end());
-
-    // Draw the best matches
-    Mat img_matches;
-    drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches);
-    imwrite("BestMatches.jpg", img_matches);
-    waitKey(0);
-
-    // Step 4: Estimate homography matrix
-    std::vector<Point2f> points1, points2;
-
-    for (size_t i = 0; i < matches.size(); i++) {
-        points1.push_back(keypoints1[matches[i].queryIdx].pt);
-        points2.push_back(keypoints2[matches[i].trainIdx].pt);
-    }
-
-    Mat H = findHomography(points1, points2, RANSAC);
-
-    // Step 5: Warp and stitch images
-    Mat result;
-    warpPerspective(img2, result, H, Size(img1.cols + img2.cols, max(img1.rows, img2.rows)));
-    imwrite("wrap.jpg", result);
-
-
-    Mat half(result, Rect(0, 0, img1.cols, img1.rows));
-    img1.copyTo(half);
-
-    // Display the stitched image
-    imwrite("Stitched_Image.jpg", result);
-    waitKey(0);
-
-    return 0;
+    // Stitcher::Mode mode = Stitcher::PANORAMA;
+    // Ptr<Stitcher> stitcher = Stitcher::create(mode);
+    // auto status = stitcher->composePanorama(images, result);
+ 
+	return 0;
 }
-
-
-int main(int argc, char *argv[])
-{   
-
-    cv::Mat img_10 = cv::imread("./images/resize_10.jpg");
-    cv::Mat img_11 = cv::imread("./images/resize_11.jpg");
-    cv::Mat img_12 = cv::imread("./images/resize_12.jpg");
-    cv::Mat img_13 = cv::imread("./images/resize_13.jpg");
-    cv::Mat img_14 = cv::imread("./images/resize_14.jpg");
-    cv::Mat img_15 = cv::imread("./images/resize_15.jpg");
-    cv::Mat img_16 = cv::imread("./images/resize_16.jpg");
-
-    // const std::string    img_path_1{argv[1]};
-    // const std::string    img_path_2{argv[2]};  // 可以使图片/图片文件夹/视频文件
-
-    // main_3();
-    // return 0;
-
-    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
-    Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
-
-
-
-    vector<Mat> images;
-    images.push_back(img_13);
-    images.push_back(img_14);
-
-    Mat result;
-    Ptr<Stitcher> stitcher = Stitcher::create(Stitcher::PANORAMA);
-    auto status = stitcher->stitch(images, result);
-
-    std::cout << "status = " << status << std::endl;
-
-    if (status != Stitcher::OK) {
-        cerr << "Error: Can't stitch images, error code = " << int(status) << endl;
-        return -1;
-    }
-
-    imwrite("dst_stitch.jpg", result);
-
-
-    // cv::Mat mat_surf = stitching_surf(img_12, img_13);
-
-    // // cv::Mat mat_dst = stitching_orb(left_img, right_img);
-
-    // // cv::Mat mat_surf = stitching_orb(left_img, right_img);
-
-    // //   cv::Mat mat_surf = stitching_sift(left_img, right_img);
-
-
-
-    // if (mat_surf.empty()) {
-    //     std::cout << "Mat is empty." << std::endl;
-    //     return 0;
-    // }
-
-    // imwrite("dst_surf.jpg", mat_surf);
-    return 0;
-
-}
-
-
 

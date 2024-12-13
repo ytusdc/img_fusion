@@ -201,7 +201,8 @@ cv::Mat stitching_orb(cv::Mat& img_left, cv::Mat& img_right)
 
     //图像配准  
     Mat imageTransform1, imageTransform2;
-    warpPerspective(img_right, imageTransform1, homo, Size(MAX(corners_t.right_top.x, corners_t.right_bottom.x), img_left.rows));
+    // warpPerspective(img_right, imageTransform1, homo, Size(MAX(corners_t.right_top.x, corners_t.right_bottom.x), img_left.rows));
+        warpPerspective(img_right, imageTransform1, homo, Size(img_left.cols + img_right.cols, img_left.rows));
     //warpPerspective(img_right, imageTransform2, adjustMat*homo, Size(img_left.cols*1.3, img_left.rows*1.8));
     // showimg("直接经过透视矩阵变换", imageTransform1);
 
@@ -217,9 +218,9 @@ cv::Mat stitching_orb(cv::Mat& img_left, cv::Mat& img_right)
     imageTransform1.copyTo(dst(Rect(0, 0, imageTransform1.cols, imageTransform1.rows)));
     img_left.copyTo(dst(Rect(0, 0, img_left.cols, img_left.rows)));
 
-    // showimg("b_dst", dst);
+    // // showimg("b_dst", dst);
 
-    OptimizeSeam(img_left, imageTransform1, dst, corners_t);
+    // OptimizeSeam(img_left, imageTransform1, dst, corners_t);
     // showimg("dst", dst);
     // imwrite("dst_111100.jpg", dst);
     // waitKey();
@@ -239,64 +240,47 @@ cv::Mat stitching_orb(cv::Mat& img_left, cv::Mat& img_right)
 cv::Mat stitching_sift(cv::Mat& img_left, cv::Mat& img_right) {
 
 
-
-    //灰度图转换  
-    Mat img1, img2;
-    cvtColor(img_right, img1, cv::COLOR_RGB2GRAY);
-    cvtColor(img_left, img2, cv::COLOR_RGB2GRAY);
-
-    // img1 = img_right;
-    // img2 = img_left;
-
-    // img1 = img_left;
-    // img2 = img_right;
-
-        // 初始化SIFT检测器和描述符提取器
-    cv::Ptr<cv::SIFT> sift = cv::SIFT::create();
-    
-    // cv::Ptr<cv::ORB>
-
-    // 检测关键点和计算描述符
-    vector<KeyPoint> keypoints1, keypoints2;
-    Mat descriptors1, descriptors2;
-    sift->detectAndCompute(img1, noArray(), keypoints1, descriptors1);
-    sift->detectAndCompute(img2, noArray(), keypoints2, descriptors2);
-
+    cv::Mat img1 = img_left;
+    cv::Mat img2 = img_right;
+ 
+    // 初始化SIFT检测器和描述符
+    cv::Ptr<cv::FeatureDetector> detector = cv::SIFT::create();
+    cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create("BruteForce");
+ 
+    // 检测关键点并计算描述符
+    std::vector<cv::KeyPoint> keypoints1, keypoints2;
+    cv::Mat descriptors1, descriptors2;
+    detector->detectAndCompute(img1, cv::noArray(), keypoints1, descriptors1);
+    detector->detectAndCompute(img2, cv::noArray(), keypoints2, descriptors2);
+ 
     // 匹配描述符
-    BFMatcher matcher(NORM_L2); // SIFT uses L2 norm
-    vector<DMatch> matches;
-    matcher.match(descriptors1, descriptors2, matches);
-
-    // 使用RANSAC找到最佳单应矩阵
-    vector<Point2f> points1, points2;
-    for (size_t i = 0; i < matches.size(); i++) {
+    std::vector<cv::DMatch> matches;
+    matcher->match(descriptors1, descriptors2, matches);
+ 
+    // 对匹配结果进行排序，并保留前N个匹配项（可选）
+    std::sort(matches.begin(), matches.end());
+    const int N = 10;  // 保留前N个匹配
+ 
+    // 绘制匹配结果
+    cv::Mat img_matches;
+    cv::drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches, cv::Scalar::all(-1), cv::Scalar::all(-1), std::vector<char>(), cv::DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+    cv::imshow("Matches", img_matches);
+    cv::waitKey(0);
+ 
+    // 找到匹配对之间的最佳单应性变换
+    std::vector<cv::Point2f> points1, points2;
+    for (size_t i = 0; i < matches.size(); ++i) {
         points1.push_back(keypoints1[matches[i].queryIdx].pt);
         points2.push_back(keypoints2[matches[i].trainIdx].pt);
     }
-    Mat H = findHomography(points1, points2, RANSAC);
+    cv::Mat H = cv::findHomography(points1, points2, cv::RANSAC, 5);
+ 
+    // 使用变换矩阵对图像进行拼接
+    cv::Mat result;
+    cv::warpPerspective(img1, result, H, cv::Size(img1.cols + img2.cols, img1.rows));
+    cv::Mat half(result, cv::Rect(0, 0, img2.cols, img2.rows));
+    img2.copyTo(half);
 
-
-    auto start = std::chrono::steady_clock::now();
-    // 使用单应矩阵进行图像拼接
-    Mat result;
-    warpPerspective(img2, result, H, Size(img1.cols + img2.cols, max(img1.rows, img2.rows)));
-    Mat half(result, Rect(0, 0, img1.cols, img1.rows));
-    img1.copyTo(half);
-
-            // 记录结束时间
-    auto end = std::chrono::steady_clock::now();
-    // 计算耗时
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    // auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
-    // 输出结果
-    std::cout << "Time taken by function: " << duration.count() << " milliseconds" << std::endl;
-
-
-    cv::namedWindow("Stitched Image", cv::WINDOW_NORMAL);
-    // 显示结果
-    imshow("Stitched Image", half);
-    waitKey(0);
-
-    return result;
+    return half;
 }
 

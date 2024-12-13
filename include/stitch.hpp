@@ -19,18 +19,20 @@ using namespace cv;
 struct ImgInfo {
     cv::Mat img;
     cv::Point top_left;      // 左上角坐标
-    cv::Point bottome_right; // 右下角坐标
+    cv::Point bottom_right; // 右下角坐标
     int up_offset;           // 针对上一张图片的位置偏移， 正数为向上偏移，负数为向下偏移
     
     ImgInfo(cv::Mat& image, 
-        int top_left_x, int top_left_y, 
-        int bottome_right_x, int bottome_right_y,
+        int top_left_x, 
+        int top_left_y, 
+        int bottom_right_x, 
+        int bottom_right_y,
         int up_pixel) {
             top_left = cv::Point(top_left_x, top_left_y);
-            bottome_right =  cv::Point(bottome_right_x, bottome_right_y);
+            bottom_right =  cv::Point(bottom_right_x, bottom_right_y);
             up_offset = up_pixel;
-            crop_width = bottome_right_x - top_left_x;
-            crop_height = bottome_right_y - top_left_y;
+            crop_width = bottom_right_x - top_left_x;
+            crop_height = bottom_right_y - top_left_y;
 
             Rect roi(top_left_x, top_left_y, crop_width, crop_height);
                 // 检查矩形是否超出图像边界

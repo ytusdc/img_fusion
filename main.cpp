@@ -1,23 +1,29 @@
-#include <iostream>  
 #include <chrono>
-#include "include/stitching.hpp"
-
 #include <iostream>
 #include <string>
 #include <vector>
-#include <opencv2/opencv.hpp>
-#include <opencv2/core/core.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/stitching.hpp>
-#include <opencv2/features2d/features2d.hpp>
-#include <opencv2/xfeatures2d/nonfree.hpp>
+// #include <opencv2/opencv.hpp>
+// #include <opencv2/core/core.hpp>
+// #include <opencv2/highgui.hpp>
+// #include <opencv2/stitching.hpp>
+// #include <opencv2/features2d/features2d.hpp>
+// #include <opencv2/xfeatures2d/nonfree.hpp>
+
+#include <opencv2/opencv.hpp> 
+#include <opencv2/highgui/highgui.hpp>   
+#include <opencv2/xfeatures2d.hpp>
+#include <opencv2/features2d.hpp> 
+
+#include "include/stitching.hpp"
 
 
 using namespace cv;
 using namespace std;
 
 
-void main_v2(string img_path_1, string img_path_2) {
+// void main_v2(string img_path_1, string img_path_2) {
+
+void main_v2(cv::Mat img1, cv::Mat img2) {
 
 
 	// Mat img1 = imread("img/img1.png", IMREAD_COLOR);
@@ -29,11 +35,10 @@ void main_v2(string img_path_1, string img_path_2) {
     // cv::Mat img1 = cv::imread("./images/resize_12.jpg", IMREAD_COLOR);
     // cv::Mat img2 = cv::imread("./images/resize_13.jpg", IMREAD_COLOR);
 
-    cv::Mat img1 = cv::imread(img_path_1, IMREAD_COLOR);
-    cv::Mat img2 = cv::imread(img_path_2, IMREAD_COLOR);
+    // cv::Mat img1 = cv::imread(img_path_1, IMREAD_COLOR);
+    // cv::Mat img2 = cv::imread(img_path_2, IMREAD_COLOR);
 
     std::vector<Mat> imgs;
-
 
     //step 2. sift feature detect
 	printf("extract sift features \n");
@@ -53,7 +58,7 @@ void main_v2(string img_path_1, string img_path_2) {
  
 	// imshow("img1", feature_img1);
 	// imshow("img2", feature_img2);
-    waitKey(0);
+    // waitKey(0);
 
 
         //step 3. instantiate mathcher
@@ -90,8 +95,7 @@ void main_v2(string img_path_1, string img_path_2) {
 	}
 
 
-
-
+    // step 5. RANSAC delete mismatched feature points
     //step 5.1 align feature points and convet to float
 	std::vector<KeyPoint> R_keypoint01, R_keypoint02;
 	for (auto &match : goodMatches)
@@ -111,7 +115,9 @@ void main_v2(string img_path_1, string img_path_2) {
 	Mat fundamental = findHomography(p01, p02, RansacStatus, cv::RANSAC);
 	Mat dst;
 	warpPerspective(img1, dst, fundamental, Size(img1.cols, img1.rows));
-	imshow("epipolar image", dst);
+	imwrite("epipolarimage.jpg", dst);
+
+
  
 	//step 5.3  delete mismatched points
 	std::vector<KeyPoint> RR_keypoint01, RR_keypoint02;
@@ -132,31 +138,23 @@ void main_v2(string img_path_1, string img_path_2) {
 	// printff("refine match pairs : " + std::to_string(RR_matches.size()));
 	Mat imgRRMatches;
 	drawMatches(img1, RR_keypoint01, img2, RR_keypoint02, RR_matches, imgRRMatches, Scalar(0, 255, 0), Scalar::all(-1));
-	imshow("final match", imgRRMatches);
+	// imshow("final match", imgRRMatches);
+    	imwrite("final_match", imgRRMatches);
 
-
-
-        //step 6. stitch
+    //step 6. stitch
 	Mat finalImg = dst.clone();
 	img2.copyTo(finalImg(Rect(0, 0, img2.cols, img2.rows)));
-	imshow("stitching image", finalImg);
+	// imshow("stitching image", finalImg);
+
+    imwrite("stitchingimage.jpg", finalImg);
 
     waitKey(0);
+    return;
 }
 
 
-int main(int argc, char *argv[])
+int main_3()
 {
-
-    const std::string    img_path_1{argv[1]};
-    const std::string    img_path_2{argv[2]};  // 可以使图片/图片文件夹/视频文件
-
-    main_v2(img_path_1, img_path_2);
-    return 0;
-
-    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
-    Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
-
 
     cv::Mat img_10 = cv::imread("./images/resize_10.jpg");
     cv::Mat img_11 = cv::imread("./images/resize_11.jpg");
@@ -166,23 +164,128 @@ int main(int argc, char *argv[])
     cv::Mat img_15 = cv::imread("./images/resize_15.jpg");
     cv::Mat img_16 = cv::imread("./images/resize_16.jpg");
 
+    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
+    Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
 
-    cv::Mat mat_surf = stitching_orb(img_12, img_13);
+    // Step 1: Load images
+    Mat img1 = left_img;
+    Mat img2 = right_img;
 
-    // cv::Mat mat_dst = stitching_orb(left_img, right_img);
-
-    // cv::Mat mat_surf = stitching_orb(left_img, right_img);
-
-    //   cv::Mat mat_surf = stitching_sift(left_img, right_img);
-
-
-
-    if (mat_surf.empty()) {
-        std::cout << "Mat is empty." << std::endl;
-        return 0;
+    if (img1.empty() || img2.empty()) {
+        std::cerr << "Error: Could not load one or both images." << std::endl;
+        return -1;
     }
 
-    imwrite("dst_surf.jpg", mat_surf);
+    // Step 2: Detect keypoints and compute descriptors
+    Ptr<SIFT> sift = SIFT::create();
+    std::vector<KeyPoint> keypoints1, keypoints2;
+    Mat descriptors1, descriptors2;
+
+    sift->detectAndCompute(img1, noArray(), keypoints1, descriptors1);
+    sift->detectAndCompute(img2, noArray(), keypoints2, descriptors2);
+
+    // Step 3: Match features
+    BFMatcher matcher(NORM_L2);
+    std::vector<DMatch> matches;
+    matcher.match(descriptors1, descriptors2, matches);
+
+    // Sort matches by score
+    std::sort(matches.begin(), matches.end());
+    // Remove not so good matches
+    const float ratio = 0.75f; // Keep top 75% matches
+    const int numGoodMatches = matches.size() * ratio;
+    matches.erase(matches.begin() + numGoodMatches, matches.end());
+
+    // Draw the best matches
+    Mat img_matches;
+    drawMatches(img1, keypoints1, img2, keypoints2, matches, img_matches);
+    imwrite("BestMatches.jpg", img_matches);
+    waitKey(0);
+
+    // Step 4: Estimate homography matrix
+    std::vector<Point2f> points1, points2;
+
+    for (size_t i = 0; i < matches.size(); i++) {
+        points1.push_back(keypoints1[matches[i].queryIdx].pt);
+        points2.push_back(keypoints2[matches[i].trainIdx].pt);
+    }
+
+    Mat H = findHomography(points1, points2, RANSAC);
+
+    // Step 5: Warp and stitch images
+    Mat result;
+    warpPerspective(img2, result, H, Size(img1.cols + img2.cols, max(img1.rows, img2.rows)));
+    imwrite("wrap.jpg", result);
+
+
+    Mat half(result, Rect(0, 0, img1.cols, img1.rows));
+    img1.copyTo(half);
+
+    // Display the stitched image
+    imwrite("Stitched_Image.jpg", result);
+    waitKey(0);
+
+    return 0;
+}
+
+
+int main(int argc, char *argv[])
+{   
+
+    cv::Mat img_10 = cv::imread("./images/resize_10.jpg");
+    cv::Mat img_11 = cv::imread("./images/resize_11.jpg");
+    cv::Mat img_12 = cv::imread("./images/resize_12.jpg");
+    cv::Mat img_13 = cv::imread("./images/resize_13.jpg");
+    cv::Mat img_14 = cv::imread("./images/resize_14.jpg");
+    cv::Mat img_15 = cv::imread("./images/resize_15.jpg");
+    cv::Mat img_16 = cv::imread("./images/resize_16.jpg");
+
+    // const std::string    img_path_1{argv[1]};
+    // const std::string    img_path_2{argv[2]};  // 可以使图片/图片文件夹/视频文件
+
+    // main_3();
+    // return 0;
+
+    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
+    Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
+
+
+
+    vector<Mat> images;
+    images.push_back(img_13);
+    images.push_back(img_14);
+
+    Mat result;
+    Ptr<Stitcher> stitcher = Stitcher::create(Stitcher::PANORAMA);
+    auto status = stitcher->stitch(images, result);
+
+    std::cout << "status = " << status << std::endl;
+
+    if (status != Stitcher::OK) {
+        cerr << "Error: Can't stitch images, error code = " << int(status) << endl;
+        return -1;
+    }
+
+    imwrite("dst_stitch.jpg", result);
+
+
+    // cv::Mat mat_surf = stitching_surf(img_12, img_13);
+
+    // // cv::Mat mat_dst = stitching_orb(left_img, right_img);
+
+    // // cv::Mat mat_surf = stitching_orb(left_img, right_img);
+
+    // //   cv::Mat mat_surf = stitching_sift(left_img, right_img);
+
+
+
+    // if (mat_surf.empty()) {
+    //     std::cout << "Mat is empty." << std::endl;
+    //     return 0;
+    // }
+
+    // imwrite("dst_surf.jpg", mat_surf);
+    return 0;
 
 }
 

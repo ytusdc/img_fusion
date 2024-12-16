@@ -66,8 +66,8 @@ cv::Mat Stitch_Custom::stitch_hard(std::vector<ImgInfo> imginfo_vec) {
     int current_width = 0;
     cv::Mat img_out = cv::Mat::zeros(out_height, out_width, CV_8UC3);
 
-    // std::cout<< "out_height = " << out_height << std::endl;
-    // std::cout<< "out_width = " << out_width << std::endl;
+    std::cout<< "out_height = " << out_height << std::endl;
+    std::cout<< "out_width = " << out_width << std::endl;
 
     int sum_offset_2 = 0;  // 累计偏移量，图片相对于第一张图的偏移量
     for (const auto& imginfo : imginfo_vec) {
@@ -77,15 +77,100 @@ cv::Mat Stitch_Custom::stitch_hard(std::vector<ImgInfo> imginfo_vec) {
         sum_offset_2 += up_offset;
         int rect_top_left_y = max_up_offset_sum - sum_offset_2;
 
-        // std::cout<< "rect_top_left_x = " << rect_top_left_x << std::endl;
-        // std::cout<< "rect_top_left_y = " << rect_top_left_y << std::endl;
-        // std::cout<< " ************ " << std::endl;
+        std::cout<< "rect_top_left_x = " << rect_top_left_x << std::endl;
+        std::cout<< "rect_top_left_y = " << rect_top_left_y << std::endl;
+        std::cout<< " ************ " << std::endl;
 
-        cv::Rect roi_rect = cv::Rect(rect_top_left_x, rect_top_left_y, imginfo.img.cols, imginfo.img.rows);
-        imginfo.img.copyTo(img_out(roi_rect));
+        int w = imginfo.img_crop.cols;
+        int h = imginfo.img_crop.rows;
+        
+        std::cout<< "w = " << w << std::endl;
+        std::cout<< "h = " << h << std::endl;
+
+
+        cv::Rect roi_rect = cv::Rect(rect_top_left_x, rect_top_left_y, imginfo.img_crop.cols, imginfo.img_crop.rows);
+        imginfo.img_crop.copyTo(img_out(roi_rect));
         current_width += imginfo.crop_width;
     }
 
     return img_out;
     //  cv::imshow("img_out", img_out);
+}
+
+cv::Mat Stitch_Custom::rotate(Mat& image, int rotate_angle) {
+	Mat dst, M;
+	int w = image.cols;
+	int h = image.rows;
+    // 获取旋转矩阵        旋转中心   角度   缩放比例 1 
+	M = getRotationMatrix2D(Point(w / 2, h / 2), rotate_angle, 1.0);
+	double cos = abs(M.at<double>(0, 0));
+	double sin = abs(M.at<double>(0, 1));
+	int nw = cos * w + sin * h;
+	int nh = sin * w + cos * h;
+	M.at<double>(0, 2) += (nw / 2 - w / 2);
+	M.at<double>(1, 2) += (nh / 2 - h / 2);
+	//warpAffine(image, dst, M, Size(w, h), INTER_LINEAR, 0, Scalar(255, 0, 0));
+	warpAffine(image, dst, M, Size(nw, nh));
+	// namedWindow("旋转演示", WINDOW_AUTOSIZE);
+	// imshow("旋转演示", dst);
+    // waitKey(0);
+    imwrite("rotat.jpg", dst);
+    return dst;
+}
+
+/*
+图片旋转 + 旋转后裁剪
+*/
+bool Stitch_Custom::rotate(ImgInfo& image_info) {
+	Mat dst, M;
+	int w = image_info.img.cols;
+	int h = image_info.img.rows;
+    // 获取旋转矩阵        旋转中心   角度   缩放比例 1 
+	M = getRotationMatrix2D(Point(w / 2, h / 2), image_info.rotate_angle, 1.0);
+	double cos = abs(M.at<double>(0, 0));
+	double sin = abs(M.at<double>(0, 1));
+	int nw = cos * w + sin * h;
+	int nh = sin * w + cos * h;
+
+	M.at<double>(0, 2) += (nw / 2 - w / 2);
+	M.at<double>(1, 2) += (nh / 2 - h / 2);
+	//warpAffine(image, dst, M, Size(w, h), INTER_LINEAR, 0, Scalar(255, 0, 0));
+	warpAffine(image_info.img, dst, M, Size(nw, nh));
+	// namedWindow("旋转演示", WINDOW_AUTOSIZE);
+	// imshow("旋转演示", dst);
+    // waitKey(0);
+
+    // 图片旋转后裁剪
+    Rect roi(image_info.top_left.x, image_info.top_left.y, image_info.crop_width, image_info.crop_height);
+    // 检查矩形是否超出图像边界
+    if (roi.x + roi.width > dst.cols || roi.y + roi.height > dst.rows) {
+        // throw std::invalid_argument("The ROI is out of the rotate image bounds!");
+        return false;
+    }
+
+    image_info.img_crop = dst(roi).clone();
+    return true;
+    // imwrite("rotat.jpg", dst);
+    // return dst;
+}
+
+bool Stitch_Custom::stitch_rotate(std::vector<ImgInfo> imginfo_vec, cv::Mat& img_result) {
+
+    int count = 0;
+    bool ret;
+    for (auto& imginfo : imginfo_vec) {
+        ret = this->rotate(imginfo);
+        if (!ret) {
+            std::cout<< "图片裁剪区域超出图片边界，定位到图片：" << count+1 << std::endl;
+            return false;
+        } else {
+
+            // char text_name[256];  
+            // sprintf(text_name, "rotate_%d.jpg", count);
+            // cv::imwrite(text_name, imginfo.img_crop);
+        }
+        count++;
+    }
+    img_result = this->stitch_hard(imginfo_vec);
+    return true;
 }

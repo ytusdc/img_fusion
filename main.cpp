@@ -10,24 +10,22 @@ using namespace std;
 /* 参数说明
     ImgInfo imginfo(
                 img,         //原始未裁剪图片
-                top_left_x,  // 裁剪位置的左上角 x
-                top_left_y,  // 裁剪位置的左上角 y
-                bottome_right_x, // 裁剪位置的右下角 x
-                bottome_right_y, // 裁剪位置的右下角 y
-                up_offset        // 按顺序，相邻的两张图片中，后面的图片相对于前面图片的上下偏移像素
+				img_crop     // 旋转+裁剪后最终图片
+                top_left_x,  // 旋转后，裁剪位置的左上角 x
+                top_left_y,  // 旋转后，裁剪位置的左上角 y
+                bottome_right_x, // 旋转后，裁剪位置的右下角 x
+                bottome_right_y, // 旋转后，裁剪位置的右下角 y
+                up_offset        // 旋转+裁剪后，按顺序，相邻的两张图片中，后面的图片相对于前面图片的上下偏移像素
                                 向上偏移为正数， 向下偏移为 负数
+				int rotate_angle; // 旋转角度，围绕图片中心旋转，正数为向左旋转，负数为向右旋转
                 );
 
   
 */
 
+cv::Mat stitch_rotate() {
 
-/*
-
-*/
-cv::Mat stitch_v2() {
-
-    string front_path = "./images/resize_10.jpg";       // 前
+	string front_path = "./images/resize_10.jpg";       // 前
     string right_front_path = "./images/resize_12.jpg"; // 右前 
     string right_back_path = "./images/resize_13.jpg";  // 右后
     string back_path = "./images/resize_14.jpg";        // 后 
@@ -50,12 +48,12 @@ cv::Mat stitch_v2() {
 
 
     
-    ImgInfo imginfo_1(img_1, 10, 10, 400, 400, 0);
-    ImgInfo imginfo_2(img_2, 100, 100, 640, 480, 50);
-    ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20);
-    ImgInfo imginfo_4(img_4, 0, 0, 300, 300, 30);
-    ImgInfo imginfo_5(img_5, 0, 0, 250, 350, -50);
-    ImgInfo imginfo_6(img_6, 70, 70, 400, 480, -10);
+    ImgInfo imginfo_1(img_1, 10, 10, 400, 400, 0, 10);
+    ImgInfo imginfo_2(img_2, 100, 100, 640, 480, 50, -10);
+    ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20, 10);
+    ImgInfo imginfo_4(img_4, 0, 0, 300, 200, 20, 15);
+    ImgInfo imginfo_5(img_5, 0, 0, 250, 350, -50, -30);
+    ImgInfo imginfo_6(img_6, 70, 70, 400, 480, -10, -10);
 
     std::vector<ImgInfo> imginfo_vec;
 
@@ -66,44 +64,25 @@ cv::Mat stitch_v2() {
     imginfo_vec.push_back(imginfo_5);
     imginfo_vec.push_back(imginfo_6);
 
-    auto  stitch_cls = new Stitch_Custom();
-    cv::Mat result = stitch_cls->stitch_hard(imginfo_vec);
-    imwrite("result.jpg", result);
+	auto  stitch_cls = new Stitch_Custom();
+	cv::Mat result;
+
+    bool ret = stitch_cls->stitch_rotate(imginfo_vec, result);
+
+	if (ret) {
+		imwrite("result.jpg", result);
+	}else {
+		std::cout<< "error, please check" << std::endl;
+		std::exit(EXIT_FAILURE);
+	}
     return result;
 }
-
-void stitch_v1(){
-    // string front_path = "./images/resize_10.jpg";       // 前
-    // string right_front_path = "./images/resize_12.jpg"; // 右前 
-    // string right_back_path = "./images/resize_13.jpg";  // 右后
-    // // string back_path = "./images/resize_14.jpg";        // 后 
-    // // string left_back_path = "./images/resize_15.jpg";   // 左后 
-    // // string left_front_path  = "./images/resize_16.jpg"; // 左前
-
-    // std::vector<cv::Mat> images_vec;     
-
-    // images_vec.push_back(cv::imread(front_path));
-    // images_vec.push_back(cv::imread(right_front_path));
-    // images_vec.push_back(cv::imread(right_back_path));
-    // // images_vec.push_back(cv::imread(back_path));
-    // // images_vec.push_back(cv::imread(left_back_path));
-    // // images_vec.push_back(cv::imread(left_front_path));
-
-    // // images_vec 可以是任意数量的图片，因为是水平拼接，要保证图片的高度一致
-
-    // auto  stitch_cls = new Stitch_Custom();
-    // cv::Mat result = stitch_cls->hconcat(images_vec);
-    // imwrite("result.jpg", result);
-
-}
-
 
 
 int main(int argc, char *argv[])
 {
-    cv::Mat result_mat = stitch_v2();
-
-
+	stitch_rotate();
+    cv::Mat result_mat = stitch_rotate();
     // 以下部分是裁剪拼接的图像部分，如不需要可以注释掉
     // 裁剪坐标不要超过图片边界，否则会报错
     // 裁剪位置的左上角坐标

@@ -81,7 +81,6 @@ cv::Mat stitch_rotate() {
 
 int main(int argc, char *argv[])
 {
-	stitch_rotate();
     cv::Mat result_mat = stitch_rotate();
     // 以下部分是裁剪拼接的图像部分，如不需要可以注释掉
     // 裁剪坐标不要超过图片边界，否则会报错

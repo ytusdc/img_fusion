@@ -1,5 +1,9 @@
 #include "stitch.hpp"
+#include <opencv2/opencv.hpp>
+#include <opencv2/photo.hpp>
 
+
+#include <numeric>
 using namespace cv;
 
 cv::Mat Stitch_Custom::stitch(
@@ -77,15 +81,15 @@ cv::Mat Stitch_Custom::stitch_hard(std::vector<ImgInfo> imginfo_vec) {
         sum_offset_2 += up_offset;
         int rect_top_left_y = max_up_offset_sum - sum_offset_2;
 
-        std::cout<< "rect_top_left_x = " << rect_top_left_x << std::endl;
-        std::cout<< "rect_top_left_y = " << rect_top_left_y << std::endl;
-        std::cout<< " ************ " << std::endl;
+        // std::cout<< "rect_top_left_x = " << rect_top_left_x << std::endl;
+        // std::cout<< "rect_top_left_y = " << rect_top_left_y << std::endl;
+        // std::cout<< " ************ " << std::endl;
 
         int w = imginfo.img_crop.cols;
         int h = imginfo.img_crop.rows;
         
-        std::cout<< "w = " << w << std::endl;
-        std::cout<< "h = " << h << std::endl;
+        // std::cout<< "w = " << w << std::endl;
+        // std::cout<< "h = " << h << std::endl;
 
 
         cv::Rect roi_rect = cv::Rect(rect_top_left_x, rect_top_left_y, imginfo.img_crop.cols, imginfo.img_crop.rows);
@@ -171,6 +175,59 @@ bool Stitch_Custom::stitch_rotate(std::vector<ImgInfo> imginfo_vec, cv::Mat& img
         }
         count++;
     }
+
+    matchBrightness(imginfo_vec);
+
     img_result = this->stitch_hard(imginfo_vec);
     return true;
+}
+
+void Stitch_Custom::applyCLAHE(Mat& img) {
+    // 将图像转换为 Lab 颜色空间
+    Mat lab;
+    cvtColor(img, lab, COLOR_BGR2Lab);
+
+    // 分离通道
+    vector<Mat> lab_planes(3);
+    split(lab, lab_planes);
+
+    // 创建并应用 CLAHE
+    Ptr<CLAHE> clahe = createCLAHE();
+    clahe->setClipLimit(4);
+    clahe->apply(lab_planes[0], lab_planes[0]);
+
+    // 合并通道并转换回 BGR 颜色空间
+    merge(lab_planes, lab);
+    cvtColor(lab, img, COLOR_Lab2BGR);
+}
+
+
+float Stitch_Custom::calculateAverageBrightness(const Mat& img) {
+    Mat gray;
+    cvtColor(img, gray, COLOR_BGR2GRAY);
+    Scalar mean = cv::mean(gray);
+    std::cout << mean[0] << std::endl;
+    return mean[0];
+}
+
+// 平均亮度调整
+void Stitch_Custom::matchBrightness(std::vector<ImgInfo>& imginfo_vec) {
+    // 计算每张图像的平均亮度
+    vector<float> avgBrightnesses;
+    for (const auto& imginfo : imginfo_vec) {
+        avgBrightnesses.push_back(calculateAverageBrightness(imginfo.img_crop));
+    }
+
+    // avgBrightnesses.push_back(-1000);
+
+    // 计算所有图像的平均亮度
+    float totalAvgBrightness = accumulate(avgBrightnesses.begin(), avgBrightnesses.end(), 0.0f) / avgBrightnesses.size();
+
+    // 根据差异调整每张图像的亮度
+    for (size_t i = 0; i < imginfo_vec.size(); ++i) {
+        float delta = totalAvgBrightness - avgBrightnesses[i];
+        Mat adjusted;
+        imginfo_vec[i].img_crop.convertTo(adjusted, -1, 1, delta);
+        imginfo_vec[i].img_crop = adjusted;
+    }
 }

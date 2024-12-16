@@ -167,6 +167,9 @@ int main_3()
     Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
     Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
 
+	// Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images_2/1.jpg", 1);    //左图
+    // Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images_2/22.jpg", 1);    //右图
+
     // Step 1: Load images
     Mat img1 = left_img;
     Mat img2 = right_img;
@@ -245,10 +248,12 @@ int main(int argc, char *argv[])
     // const std::string    img_path_1{argv[1]};
     // const std::string    img_path_2{argv[2]};  // 可以使图片/图片文件夹/视频文件
 
-    // main_3();
-    // return 0;
+    main_3();
+    return 0;
 
-    Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
+
+
+	Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
     Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
 
     Mat mat_10_11 = imread("./10-11.jpg", 1); 

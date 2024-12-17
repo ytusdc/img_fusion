@@ -1,0 +1,11 @@
+ # opencv 源码
+ stitching
+ stitcher.cpp  
+ stitching.hpp 
+
+# 知乎源码讲解
+https://zhuanlan.zhihu.com/p/604500203
+ zhihu_stitch.cpp  
+ zhihu_stitch.hpp
+
+

@@ -9,7 +9,7 @@
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 
-// #include "include/common.hpp"
+#include "include/common.hpp"
 #include "include/stitching.hpp"
 
 using namespace std;
@@ -64,16 +64,17 @@ int main(int argc, char* argv[])
 	img_vec.push_back(img_14);
 
 	path_vec.push_back(path_15);
-	// img_vec.push_back(img_15);
+	img_vec.push_back(img_15);
 
 	path_vec.push_back(path_16);
-	// img_vec.push_back(img_16);
+	img_vec.push_back(img_16);
 
-	// path_vec.push_back(path_17);
+	path_vec.push_back(path_17);
 	img_vec.push_back(img_17);
 
-	// path_vec.push_back(path_18);
+	path_vec.push_back(path_18);
 	img_vec.push_back(img_18);
+
 
 
 	auto stitch_custom = new Stitch_Custom();

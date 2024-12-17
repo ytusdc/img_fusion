@@ -33,8 +33,8 @@ include_directories(${INCLUDE_DIRS})
 #生成程序
 add_executable(${PROJECT_NAME}
         main.cpp
-        # include/stitching_v1.cpp
-        # include/stitching_v2.cpp
+        include/stitching_v1.cpp
+        include/stitching_v2.cpp
         include/stitching.cpp
         )
 

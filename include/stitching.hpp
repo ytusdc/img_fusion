@@ -70,6 +70,16 @@ namespace stitch_custom {
 // double seam_work_aspect = 1;
 
 
+/*
+	通过 initStitchParam 传入图片，先将特征提取、匹配、变换矩阵计算等步骤归为初始化部分，
+	计算得到相关变换参数，6张 640*480 图片，计算用时1.5s-2s 左右
+
+	然后 beginStitch 传入跟initStitchParam，相同相机获取的图片img，可以直接根据上一步计算得到的参数,进行拼接，
+	缩短拼接的用时争取达到实时性， 6张 640*480 图片，拼接用时 60ms 左右
+
+
+*/
+
 class Stitch_Custom {
 
 public:

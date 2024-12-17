@@ -12,8 +12,8 @@ using namespace std;
 
 namespace stitch_temp {
 
-// int stitch_v1(string filepath);
-// int stitch_v2(string filepath);
+int stitch_v1(string filepath);
+int stitch_v2(string filepath);
 
 }
 

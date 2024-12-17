@@ -1,91 +1,44 @@
+
+#include <chrono>
+#include <iostream>
+
+#include <vector>
 #include <iostream>
 #include <fstream>
 #include <string>
-#include "opencv2/opencv_modules.hpp"
-#include <opencv2/core/utility.hpp>
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/stitching/detail/autocalib.hpp"
-#include "opencv2/stitching/detail/blenders.hpp"
-#include "opencv2/stitching/detail/timelapsers.hpp"
-#include "opencv2/stitching/detail/camera.hpp"
-#include "opencv2/stitching/detail/exposure_compensate.hpp"
-#include "opencv2/stitching/detail/matchers.hpp"
-#include "opencv2/stitching/detail/motion_estimators.hpp"
-#include "opencv2/stitching/detail/seam_finders.hpp"
-#include "opencv2/stitching/detail/warpers.hpp"
-#include "opencv2/stitching/warpers.hpp"
-#include "opencv2/xfeatures2d/nonfree.hpp"
+
+#include "stitching.hpp"
+
+namespace stitch_custom {
+
+size_t num_images;
+bool is_work_scale_set = false, is_seam_scale_set = false, is_compose_scale_set = false;
+double work_scale = 1, seam_scale = 1, compose_scale = 1;
+float warped_image_scale;
+
+Ptr<RotationWarper> warper;
+Ptr<WarperCreator> warper_creator;
+vector<CameraParams> cameras;  //相机参数
+
+vector<Size> full_img_sizes;
+vector<Point> corners;
+vector<UMat> masks_warped;
+vector<Size> sizes;
+Ptr<ExposureCompensator> compensator;
 
 
-#include "common.hpp"
+bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 
-
-
-using namespace std;
-using namespace cv;
-using namespace cv::detail;
-
-
-namespace stitch_temp {
-
-// Default command line args  默认命令行参数
-vector<String> img_names;
-bool preview = false;
-bool try_cuda = false;
-double work_megapix = 0.6;
-double seam_megapix = 0.1;
-double compose_megapix = -1;
-float conf_thresh = 1.f;
-#ifdef HAVE_OPENCV_XFEATURES2D
-string features_type = "surf";
-#else
-string features_type = "orb";
-#endif
-string matcher_type = "homography";
-string estimator_type = "homography";
-string ba_cost_func = "ray";
-string ba_refine_mask = "xxxxx";
-bool do_wave_correct = true;
-WaveCorrectKind wave_correct = detail::WAVE_CORRECT_HORIZ;
-bool save_graph = false;
-std::string save_graph_to;
-string warp_type = "cylindrical";
-int expos_comp_type = ExposureCompensator::GAIN_BLOCKS;
-int expos_comp_nr_feeds = 1;
-int expos_comp_nr_filtering = 2;
-int expos_comp_block_size = 32;
-float match_conf = 0.3f;
-string seam_find_type = "gc_color";
-int blend_type = Blender::MULTI_BAND;
-int timelapse_type = Timelapser::AS_IS;
-float blend_strength = 5;
-string result_name = "result.jpg";
-bool timelapse = false;
-int range_width = -1;
-
-double seam_work_aspect = 1;
-
-/*
-
-是 stitch_v1 基础上的修改版本
-
-https://blog.csdn.net/GIS_feifei/article/details/102875389
-
-基于OpenCV4.1.1帮助文档内Examples的stitching_detail.cpp改编。
-包括提取特征点、特征点匹配、特征点提纯、预估相机参数、全面细化相机参数、图像变换、
-补偿曝光器、边缘拼接器、图像融合等功能，可对两张以上的图片进行融合，得到效果很好的全景图。
-
-*/
-int stitch_v2(string filepath)
-{
-	double work_scale = 1, seam_scale = 1, compose_scale = 1;
-	bool is_work_scale_set = false, is_seam_scale_set = false, is_compose_scale_set = false;
+	// double work_scale = 1, seam_scale = 1, compose_scale = 1;
+	// bool is_work_scale_set = false, is_seam_scale_set = false, is_compose_scale_set = false;
 	//获取文件夹图片的路径
 	// cv::String filepath = "./img_test/*.jpg";        //！！！更改为图片所在文件夹路径！！！
-	glob(filepath, img_names, false);
-	size_t num_images = img_names.size();
+	// glob(filepath, img_names, false);
 
+	img_names = img_path_vec;
+
+	// size_t num_images = img_names.size();
+	num_images = img_names.size();
 
 	// Ptr<Feature2D> finder = xfeatures2d::SIFT::create();
 
@@ -94,7 +47,9 @@ int stitch_v2(string filepath)
 	Mat full_img, img;
 	vector<ImageFeatures> features(num_images);  //声明一个初始大小为num_images的ImageFeatures
 	vector<Mat> images(num_images); //num_images个图像组成的数组
-	vector<Size> full_img_sizes(num_images); //num_images个图像的尺寸组成的数组
+
+	// vector<Size> full_img_sizes(num_images); //num_images个图像的尺寸组成的数组
+	full_img_sizes.resize(num_images); //num_images个图像的尺寸组成的数组
 
 	for (int i = 0; i < num_images; ++i)
 	{	
@@ -164,7 +119,9 @@ int stitch_v2(string filepath)
 		estimator = makePtr<AffineBasedEstimator>();
 	else
 		estimator = makePtr<HomographyBasedEstimator>();
-	vector<CameraParams> cameras;  //相机参数
+
+	// vector<CameraParams> cameras;  //相机参数
+
 	if (!(*estimator)(features, pairwise_matches, cameras))
 	{
 		cout << "Homography estimation failed.\n";  //单应性估计失败了。
@@ -210,7 +167,8 @@ int stitch_v2(string filepath)
 		focals.push_back(cameras[i].focal);
 	}
 	sort(focals.begin(), focals.end());
-	float warped_image_scale;
+	// float warped_image_scale;
+	
 	if (focals.size() % 2 == 1)
 		warped_image_scale = static_cast<float>(focals[focals.size() / 2]);
 	else
@@ -230,10 +188,18 @@ int stitch_v2(string filepath)
 	t = getTickCount();
 #endif
 //···········································
-	vector<Point> corners(num_images);        //表示映射变换后图像的左上角坐标
-	vector<UMat> masks_warped(num_images);    //表示映射变换后的图像掩码
+	// vector<Point> corners(num_images);        //表示映射变换后图像的左上角坐标
+	// vector<UMat> masks_warped(num_images);    //表示映射变换后的图像掩码
+
+	corners.resize(num_images);        //表示映射变换后图像的左上角坐标
+	masks_warped.resize(num_images);    //表示映射变换后的图像掩码
+
+
 	vector<UMat> images_warped(num_images);   //表示映射变换后的图像
-	vector<Size> sizes(num_images);           //表示映射变换后的图像尺寸
+	// vector<Size> sizes(num_images);           //表示映射变换后的图像尺寸
+
+	sizes.resize(num_images);           //表示映射变换后的图像尺寸
+
 	vector<UMat> masks(num_images);           //表示源图的掩码
 											  // Preapre images masks  准备图像掩膜
 	for (int i = 0; i < num_images; ++i)
@@ -242,7 +208,9 @@ int stitch_v2(string filepath)
 		masks[i].setTo(Scalar::all(255));
 	}
 	// Warp images and their masks 扭曲图像和他们的掩膜
-	Ptr<WarperCreator> warper_creator;
+	// Ptr<WarperCreator> warper_creator;
+
+
 #ifdef HAVE_OPENCV_CUDAWARPING
 	if (try_cuda && cuda::getCudaEnabledDeviceCount() > 0)
 	{
@@ -295,7 +263,10 @@ int stitch_v2(string filepath)
 		return 1;
 	}
 
-	Ptr<RotationWarper> warper = warper_creator->create(static_cast<float>(warped_image_scale * seam_work_aspect));
+	// Ptr<RotationWarper> warper = warper_creator->create(static_cast<float>(warped_image_scale * seam_work_aspect));
+
+	warper = warper_creator->create(static_cast<float>(warped_image_scale * seam_work_aspect));
+
 	for (int i = 0; i < num_images; ++i)
 	{
 		Mat_<float> K;
@@ -320,7 +291,11 @@ int stitch_v2(string filepath)
 	t = getTickCount();
 #endif
 //····························································
-	Ptr<ExposureCompensator> compensator = ExposureCompensator::createDefault(expos_comp_type); //曝光补偿器
+	// Ptr<ExposureCompensator> compensator = ExposureCompensator::createDefault(expos_comp_type); //曝光补偿器
+
+
+	compensator = ExposureCompensator::createDefault(expos_comp_type); //曝光补偿器
+
 	if (dynamic_cast<GainCompensator*>(compensator.get()))
 	{
 		GainCompensator* gcompensator = dynamic_cast<GainCompensator*>(compensator.get());
@@ -388,18 +363,28 @@ int stitch_v2(string filepath)
 #if ENABLE_LOG
 	t = getTickCount();
 #endif
-//······················································
+
+	
+	return true;
+}
+
+bool Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec) {
+	//······················································
 	Mat img_warped, img_warped_s;
 	Mat dilated_mask, seam_mask, mask, mask_warped;
 	Ptr<Blender> blender;
 	Ptr<Timelapser> timelapser;
 	//double compose_seam_aspect = 1;
 	double compose_work_aspect = 1;
+	Mat full_img;
+	Mat img;
 	for (int img_idx = 0; img_idx < num_images; ++img_idx)
 	{
 		//LOGLN("Compositing image #" << indices[img_idx] + 1);
 		// Read image and resize it if necessary 读取图像并在必要时调整大小
-		full_img = imread(samples::findFile(img_names[img_idx]));
+		// full_img = imread(samples::findFile(img_names[img_idx]));
+
+		full_img = img_vec[img_idx];
 		if (!is_compose_scale_set)
 		{
 			if (compose_megapix > 0)
@@ -484,18 +469,18 @@ int stitch_v2(string filepath)
 		// Blend the current image 融合当前图像
 		if (timelapse)
 		{
-			timelapser->process(img_warped_s, Mat::ones(img_warped_s.size(), CV_8UC1), corners[img_idx]);
-			String fixedFileName;
-			size_t pos_s = String(img_names[img_idx]).find_last_of("/\\");
-			if (pos_s == String::npos)
-			{
-				fixedFileName = "fixed_" + img_names[img_idx];
-			}
-			else
-			{
-				fixedFileName = "fixed_" + String(img_names[img_idx]).substr(pos_s + 1, String(img_names[img_idx]).length() - pos_s);
-			}
-			imwrite(fixedFileName, timelapser->getDst());
+			// timelapser->process(img_warped_s, Mat::ones(img_warped_s.size(), CV_8UC1), corners[img_idx]);
+			// String fixedFileName;
+			// size_t pos_s = String(img_names[img_idx]).find_last_of("/\\");
+			// if (pos_s == String::npos)
+			// {
+			// 	fixedFileName = "fixed_" + img_names[img_idx];
+			// }
+			// else
+			// {
+			// 	fixedFileName = "fixed_" + String(img_names[img_idx]).substr(pos_s + 1, String(img_names[img_idx]).length() - pos_s);
+			// }
+			// imwrite(fixedFileName, timelapser->getDst());
 		}
 		else
 		{

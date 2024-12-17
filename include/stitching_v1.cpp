@@ -34,6 +34,8 @@ https://blog.csdn.net/GIS_feifei/article/details/102875389
 
 */
 
+namespace stitch_temp {
+
 int stitch_v1(string filepath)
 {
 	//获取图片路径
@@ -156,3 +158,4 @@ int stitch_v1(string filepath)
 	return 0;
 }
 
+}

@@ -26,13 +26,16 @@ list(APPEND ALL_LIBS
         ${OpenCV_LIBRARIES}
         )
 
+# include_directories(${CMAKE_SOURCE_DIR}/include)
+
 include_directories(${INCLUDE_DIRS})
 
 #生成程序
 add_executable(${PROJECT_NAME}
         main.cpp
-        include/common.cpp
-        include/stitching.cpp
+        include/stitching_v1.cpp
+        include/stitching_v2.cpp
+        # include/stitching_v3.cpp
         )
 
 # 将链接目录添加到target

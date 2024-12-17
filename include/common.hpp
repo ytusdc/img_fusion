@@ -10,16 +10,9 @@
 using namespace cv;
 using namespace std;
 
-typedef struct
-{
-    Point2f left_top;
-    Point2f left_bottom;
-    Point2f right_top;
-    Point2f right_bottom;
-}four_corners_t;
 
-void CalcCorners(const Mat& H, const Mat& src, four_corners_t& corners);
-void OptimizeSeam(Mat& img1, Mat& trans, Mat& dst, four_corners_t& corners);
-void showimg(string name, cv::Mat img);
+int stitch_v1(string filepath);
+int stitch_v2(string filepath);
+
 
 #endif  // COMMON_HPP

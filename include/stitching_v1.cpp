@@ -25,12 +25,20 @@
 using namespace cv;
 using namespace std;
 using namespace cv::detail;
- 
-int main()
+
+/*
+https://blog.csdn.net/GIS_feifei/article/details/102875389
+没有使用 曝光补偿器 和 接缝拼接器。
+
+基础版本，
+
+*/
+
+int stitch_v1(string filepath)
 {
 	//获取图片路径
 	vector<String>image_names;  //所有图片名字
-	String filepath = "/home/ytusdc/codes_zkyc/img_fusion/img_test";   //图片存储路径
+	// String filepath = "/home/ytusdc/codes_zkyc/img_fusion/img_test";   //图片存储路径
 	glob(filepath, image_names, false);
 	size_t num_images = image_names.size(); //图片数量
 	cout << "检索到的图片为：" << endl;

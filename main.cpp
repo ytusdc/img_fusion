@@ -19,8 +19,6 @@ using namespace std;
                                 向上偏移为正数， 向下偏移为 负数
 				int rotate_angle; // 旋转角度，围绕图片中心旋转，正数为向左旋转，负数为向右旋转
                 );
-
-  
 */
 
 cv::Mat stitch_rotate() {
@@ -50,7 +48,7 @@ cv::Mat stitch_rotate() {
     
     ImgInfo imginfo_1(img_1, 10, 10, 400, 400, 0, 10);
     ImgInfo imginfo_2(img_2, 100, 100, 640, 480, 50, -10);
-    ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20, 10);
+    ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20, 100);
     ImgInfo imginfo_4(img_4, 0, 0, 300, 200, 20, 15);
     ImgInfo imginfo_5(img_5, 0, 0, 250, 350, -50, -30);
     ImgInfo imginfo_6(img_6, 70, 70, 400, 480, -10, -10);
@@ -81,10 +79,12 @@ cv::Mat stitch_rotate() {
 
 int main(int argc, char *argv[])
 {
-	stitch_rotate();
     cv::Mat result_mat = stitch_rotate();
+
+
     // 以下部分是裁剪拼接的图像部分，如不需要可以注释掉
     // 裁剪坐标不要超过图片边界，否则会报错
+    
     // 裁剪位置的左上角坐标
     int top_left_x=0;
     int top_left_y=0;

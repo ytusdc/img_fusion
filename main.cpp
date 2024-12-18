@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
 	img_vec.push_back(img_17);
 	init_img_vec.push_back(img_17);
 
-	// img_vec.push_back(img_18);
-	// init_img_vec.push_back(img_18);
+	img_vec.push_back(img_18);
+	init_img_vec.push_back(img_18);
 
 
 
@@ -96,7 +96,7 @@ int main(int argc, char* argv[])
 
 	std::cout<< "******************" << std::endl;
 
-	int count = 3;
+	int count = 0;
 
 	cv::Mat result_stitch;
 

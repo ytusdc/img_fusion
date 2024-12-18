@@ -14,24 +14,27 @@
 
 using namespace std;
 using namespace cv;
-// using namespace stitch_temp;
+using namespace stitch_temp;
 
 int main(int argc, char* argv[])
 {	
-	// string file_path = "./img_test/*";
+	// string file_path = "./images/3/*.jpg";
 
-	// stitch_v1(file_path);
+
+    // // string file_path = "./img_test";
 	// stitch_temp::stitch_v2(file_path);
 
-	String path_10 = "./img_test/resize_10.jpg";
-	String path_11 = "./img_test/resize_11.jpg";
-	String path_12 = "./img_test/resize_12.jpg";
-	String path_13 = "./img_test/resize_13.jpg";
-	String path_14 = "./img_test/resize_14.jpg";
-	String path_15 = "./img_test/resize_15.jpg";
-	String path_16 = "./img_test/resize_16.jpg";
-	String path_17 = "./img_test/resize_17.jpg";
-	String path_18 = "./img_test/resize_18.jpg";
+    // return 0;
+
+	string path_10 = "./img_test/resize_10.jpg";
+	string path_11 = "./img_test/resize_11.jpg";
+	string path_12 = "./img_test/resize_12.jpg";
+	string path_13 = "./img_test/resize_13.jpg";
+	string path_14 = "./img_test/resize_14.jpg";
+	string path_15 = "./img_test/resize_15.jpg";
+	string path_16 = "./img_test/resize_16.jpg";
+	string path_17 = "./img_test/resize_17.jpg";
+	string path_18 = "./img_test/resize_18.jpg";
 
 	cv::Mat img_10 = cv::imread(path_10);
 	cv::Mat img_11 = cv::imread(path_11);
@@ -42,7 +45,6 @@ int main(int argc, char* argv[])
 	cv::Mat img_16 = cv::imread(path_16);
 	cv::Mat img_17 = cv::imread(path_17);
 	cv::Mat img_18 = cv::imread(path_18);
-
 
 	std::vector<cv::Mat> init_img_vec;
 	std::vector<cv::Mat> img_vec;
@@ -56,27 +58,33 @@ int main(int argc, char* argv[])
 	// img_vec.push_back(img_12);
 	// init_img_vec.push_back(img_12);
 
-	img_vec.push_back(img_13);
-	init_img_vec.push_back(img_13);
+	// img_vec.push_back(img_13);
+	// init_img_vec.push_back(img_13);
 
-	img_vec.push_back(img_14);
+    img_vec.push_back(img_14);
 	init_img_vec.push_back(img_14);
 
-	img_vec.push_back(img_15);
+    img_vec.push_back(img_15);
 	init_img_vec.push_back(img_15);
 
-	img_vec.push_back(img_16);
+    img_vec.push_back(img_16);
 	init_img_vec.push_back(img_16);
 
-	img_vec.push_back(img_17);
+    img_vec.push_back(img_17);
 	init_img_vec.push_back(img_17);
 
-	img_vec.push_back(img_18);
-	init_img_vec.push_back(img_18);
+    // img_vec.push_back(img_18);
+	// init_img_vec.push_back(img_18);
 
 
+    string path = "./img_test/*.jpg";
 
-	auto stitch_custom = new Stitch_Custom();
+
+    auto stitch_custom = new Stitch_Custom();
+
+
+    // stitch_custom->get_vec(path, init_img_vec, img_vec);
+
 
 	auto start_init = std::chrono::high_resolution_clock::now();
 

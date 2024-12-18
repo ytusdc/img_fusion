@@ -46,9 +46,10 @@ public:
 
 	// return 为 0 时，方可继续
 	int initStitchParam(std::vector<cv::Mat> img_path_vec);
-
-
 	int beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch);
+
+	void get_vec(string file_path, std::vector<cv::Mat>& init_img_vec, std::vector<cv::Mat>& img_vec);
+
 
 public:
 	// Default command line args  默认命令行参数

@@ -103,7 +103,7 @@ int Stitch_Custom::initStitchParam(std::vector<cv::Mat> img_vec) {
 	if (num_images < 2)
 	{
 		//LOGLN("Need more images");
-		std::cout<< "经过处理判断来，可能来自同一全景图的图片只有 1 张 "<<std::endl;
+		std::cout<< "经过处理筛选判断，可能来自同一全景图的图片只有 1 张 "<<std::endl;
 		return -1;
 	}
 
@@ -510,5 +510,28 @@ int Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch
 		// imwrite(result_name, result);
 		// return result;
 	}
-	
+}
+
+/*
+
+方便获取文件夹下所有的图片并读取
+*/
+void Stitch_Custom::get_vec(std::string file_path, std::vector<cv::Mat>& init_img_vec, std::vector<cv::Mat>& img_vec) {
+
+	vector<string> img_names;
+	glob(file_path, img_names, false);
+	size_t num_images = img_names.size();
+
+	init_img_vec.resize(num_images);
+	img_vec.resize(num_images);
+
+	cv::Mat img;
+	for (int i = 0; i < num_images; ++i)
+	{	
+		img = imread(samples::findFile(img_names[i]));
+		init_img_vec[i] = img.clone();
+		img_vec[i] = img.clone();
+
+	}
+
 }

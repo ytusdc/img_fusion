@@ -10,7 +10,7 @@
 #include "stitching.hpp"
 
 
-int Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
+int Stitch_Custom::initStitchParam(std::vector<cv::Mat> img_vec) {
 
 	// double work_scale = 1, seam_scale = 1, compose_scale = 1;
 	// bool is_work_scale_set = false, is_seam_scale_set = false, is_compose_scale_set = false;
@@ -18,10 +18,10 @@ int Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 	// cv::String filepath = "./img_test/*.jpg";        //！！！更改为图片所在文件夹路径！！！
 	// glob(filepath, img_names, false);
 
-	img_names = img_path_vec;
+	// img_names = img_path_vec;
 
 	// size_t num_images = img_names.size();
-	num_images = img_names.size();
+	num_images = img_vec.size();
 	
 	num_initparam_imgvec = num_images;
 
@@ -44,8 +44,9 @@ int Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 
 	for (int i = 0; i < num_images; ++i)
 	{	
-		std::cout<< "img path = " << img_names[i] << std::endl;
-		full_img = imread(samples::findFile(img_names[i])); //cv::samples::findFile(const cv::String & relative_path, bool	required = true, bool silentMode = false)
+		// std::cout<< "img path = " << img_names[i] << std::endl;
+		// full_img = imread(samples::findFile(img_names[i])); //cv::samples::findFile(const cv::String & relative_path, bool	required = true, bool silentMode = false)
+		full_img = img_vec[i];
 		full_img_sizes[i] = full_img.size();
 
 		//double work_scale = min(1.0, sqrt(0.6 * 1e6 / full_img.size().area()));
@@ -89,16 +90,16 @@ int Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 	for (size_t i = 0; i < indices.size(); ++i)
 	{	
 		// std::cout<< "indices id = " << indices[i] << std::endl;
-		img_names_subset.push_back(img_names[indices[i]]);
+		// img_names_subset.push_back(img_names[indices[i]]);
 		img_subset.push_back(images[indices[i]]);
 		full_img_sizes_subset.push_back(full_img_sizes[indices[i]]);
 	}
 	images = img_subset;   //确信来自同一全景图的图像 重新组成 images
-	img_names = img_names_subset; //确信来自同一全景图的图像名字 重新组成img_names
+	// img_names = img_names_subset; //确信来自同一全景图的图像名字 重新组成img_names
 	full_img_sizes = full_img_sizes_subset; //新的尺寸集合
 	
 	// Check if we still have enough images
-	num_images = static_cast<int>(img_names.size());
+	num_images = static_cast<int>(images.size());
 	if (num_images < 2)
 	{
 		//LOGLN("Need more images");
@@ -106,7 +107,7 @@ int Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 		return -1;
 	}
 
-	std::cout<< "img size = " << img_names.size() << std::endl;
+	std::cout<< "img size = " << images.size() << std::endl;
 
 //·························································
 	Ptr<Estimator> estimator;

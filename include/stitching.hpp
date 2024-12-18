@@ -45,14 +45,14 @@ public:
     ~Stitch_Custom(){};
 
 	// return 为 0 时，方可继续
-	int initStitchParam(std::vector<String> img_path_vec);
+	int initStitchParam(std::vector<cv::Mat> img_path_vec);
 
 
 	int beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch);
 
 public:
 	// Default command line args  默认命令行参数
-	vector<String> img_names;
+	// vector<String> img_names;
 	// bool preview = false;
 	bool try_cuda = false;
 	double work_megapix = 0.6;

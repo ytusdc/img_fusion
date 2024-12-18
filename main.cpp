@@ -44,35 +44,35 @@ int main(int argc, char* argv[])
 	cv::Mat img_18 = cv::imread(path_18);
 
 
-	std::vector<String> path_vec;
+	std::vector<cv::Mat> init_img_vec;
 	std::vector<cv::Mat> img_vec;
 
-	// path_vec.push_back(path_10);
 	// img_vec.push_back(img_10);
+	// init_img_vec.push_back(img_10);
 
-	// path_vec.push_back(path_11);
 	// img_vec.push_back(img_11);
+	// init_img_vec.push_back(img_11);
 
-	// path_vec.push_back(path_12);
 	// img_vec.push_back(img_12);
+	// init_img_vec.push_back(img_12);
 
-	path_vec.push_back(path_13);
 	img_vec.push_back(img_13);
+	init_img_vec.push_back(img_13);
 
-	path_vec.push_back(path_14);
 	img_vec.push_back(img_14);
+	init_img_vec.push_back(img_14);
 
-	path_vec.push_back(path_15);
 	img_vec.push_back(img_15);
+	init_img_vec.push_back(img_15);
 
-	path_vec.push_back(path_16);
 	img_vec.push_back(img_16);
+	init_img_vec.push_back(img_16);
 
-	// path_vec.push_back(path_17);
-	// img_vec.push_back(img_17);
+	img_vec.push_back(img_17);
+	init_img_vec.push_back(img_17);
 
-	// path_vec.push_back(path_18);
 	// img_vec.push_back(img_18);
+	// init_img_vec.push_back(img_18);
 
 
 
@@ -81,7 +81,7 @@ int main(int argc, char* argv[])
 	auto start_init = std::chrono::high_resolution_clock::now();
 
 	int ret;
-	ret = stitch_custom->initStitchParam(path_vec);
+	ret = stitch_custom->initStitchParam(img_vec);
 
 	if(ret != 0) {
 		std::cout<< "无法拼接, 出现错误, 请根据log检查" << std::endl;
@@ -103,7 +103,7 @@ int main(int argc, char* argv[])
 	for (int i=0; i <= count; i++) {
 		auto start = std::chrono::high_resolution_clock::now();
 
-		ret = stitch_custom->beginStitch(img_vec, result_stitch);
+		ret = stitch_custom->beginStitch(init_img_vec, result_stitch);
 		
 		if(ret != 0) {
 			std::cout<< "拼接报错, 请根据log检查" << std::endl;

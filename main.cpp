@@ -15,7 +15,6 @@
 using namespace std;
 using namespace cv;
 // using namespace stitch_temp;
-using namespace stitch_custom;
 
 int main(int argc, char* argv[])
 {	
@@ -89,17 +88,27 @@ int main(int argc, char* argv[])
 	// 输出结果
 	std::cout << "init程序耗时: " << elapsed_init.count() << " ms" << std::endl;
 
-
-
 	std::cout<< "******************" << std::endl;
-	auto start = std::chrono::high_resolution_clock::now();
 
-	stitch_custom->beginStitch(img_vec);
+	int count = 3;
 
-	auto end = std::chrono::high_resolution_clock::now();
-	std::chrono::duration<double, std::milli> elapsed_stitch = end - start;
-	// 输出结果
-	std::cout << "stitch程序耗时: " << elapsed_stitch.count() << " ms" << std::endl;
+	cv::Mat result;
+
+	for (int i=0; i <= count; i++) {
+		auto start = std::chrono::high_resolution_clock::now();
+
+		result = stitch_custom->beginStitch(img_vec);
+
+		auto end = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> elapsed_stitch = end - start;
+		// 输出结果
+		std::cout << "stitch程序耗时: " << elapsed_stitch.count() << " ms" << std::endl;
+
+		char text_name[256];  
+        sprintf(text_name, "result_%d.jpg", i);
+		cv::imwrite(text_name, result);
+
+	}
 
 	return 0;
 }

@@ -9,23 +9,6 @@
 
 #include "stitching.hpp"
 
-namespace stitch_custom {
-
-size_t num_images;
-bool is_work_scale_set = false, is_seam_scale_set = false, is_compose_scale_set = false;
-double work_scale = 1, seam_scale = 1, compose_scale = 1;
-float warped_image_scale;
-
-Ptr<RotationWarper> warper;
-Ptr<WarperCreator> warper_creator;
-vector<CameraParams> cameras;  //相机参数
-
-vector<Size> full_img_sizes;
-vector<Point> corners;
-vector<UMat> masks_warped;
-vector<Size> sizes;
-Ptr<ExposureCompensator> compensator;
-
 
 bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 
@@ -363,12 +346,11 @@ bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 #if ENABLE_LOG
 	t = getTickCount();
 #endif
-
 	
 	return true;
 }
 
-bool Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec) {
+cv::Mat Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec) {
 	//······················································
 	Mat img_warped, img_warped_s;
 	Mat dilated_mask, seam_mask, mask, mask_warped;
@@ -491,11 +473,9 @@ bool Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec) {
 	{
 		Mat result, result_mask;
 		blender->blend(result, result_mask);
-		//		LOGLN("Compositing, time: " << ((getTickCount() - t) / getTickFrequency()) << " sec");
-		imwrite(result_name, result);
-	}
-	//	LOGLN("Finished, total time: " << ((getTickCount() - app_start_time) / getTickFrequency()) << " sec");
-	return 0;
-}
 
+		// imwrite(result_name, result);
+		return result;
+	}
+	
 }

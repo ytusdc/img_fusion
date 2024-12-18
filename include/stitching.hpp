@@ -44,8 +44,11 @@ public:
 	explicit Stitch_Custom(){};
     ~Stitch_Custom(){};
 
-	bool initStitchParam(std::vector<String> img_path_vec);
-	cv::Mat beginStitch(std::vector<cv::Mat> img_vec);
+	// return 为 0 时，方可继续
+	int initStitchParam(std::vector<String> img_path_vec);
+
+
+	int beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch);
 
 public:
 	// Default command line args  默认命令行参数
@@ -103,6 +106,10 @@ public:
 	vector<UMat> masks_warped;
 	vector<Size> sizes;
 	Ptr<ExposureCompensator> compensator;
+
+
+	vector<int> indices; // 可用拼接图片子集id
+	size_t num_initparam_imgvec;
 };
 
 #endif  // STITCHING_HPP

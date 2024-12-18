@@ -10,7 +10,7 @@
 #include "stitching.hpp"
 
 
-bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
+int Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 
 	// double work_scale = 1, seam_scale = 1, compose_scale = 1;
 	// bool is_work_scale_set = false, is_seam_scale_set = false, is_compose_scale_set = false;
@@ -22,6 +22,14 @@ bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 
 	// size_t num_images = img_names.size();
 	num_images = img_names.size();
+	
+	num_initparam_imgvec = num_images;
+
+	if (num_images < 2) {
+		std::cout<< "传入图片数量至少2张及以上。"<<std::endl;
+		return -1;
+	}
+
 
 	// Ptr<Feature2D> finder = xfeatures2d::SIFT::create();
 
@@ -70,7 +78,10 @@ bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 	matcher->collectGarbage();
 	// ofstream f(save_graph_to.c_str());  //ofstream：c++ 写操作
 	// f << matchesGraphAsString(img_names, pairwise_matches, conf_thresh);
-	vector<int> indices = leaveBiggestComponent(features, pairwise_matches, conf_thresh);
+	// vector<int> indices = leaveBiggestComponent(features, pairwise_matches, conf_thresh);
+
+
+	indices = leaveBiggestComponent(features, pairwise_matches, conf_thresh);
 
 	vector<Mat> img_subset; //图像的子集 
 	vector<String> img_names_subset;  //图像名字的子集
@@ -91,6 +102,7 @@ bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 	if (num_images < 2)
 	{
 		//LOGLN("Need more images");
+		std::cout<< "经过处理判断来，可能来自同一全景图的图片只有 1 张 "<<std::endl;
 		return -1;
 	}
 
@@ -347,11 +359,28 @@ bool Stitch_Custom::initStitchParam(std::vector<String> img_path_vec) {
 	t = getTickCount();
 #endif
 	
-	return true;
+	return 0;
 }
 
-cv::Mat Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec) {
-	//······················································
+int Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch) {
+
+
+	if (img_vec.size() != num_initparam_imgvec) {
+		std::cout<< "传入图片数量, 必须和初始化参数中图片数量相同，且一一对应"<<std::endl;
+		return -1;
+	} 
+
+	// initStitchParam 会对图片筛选来自同一全景图的图片，这里同样要做对应的筛选取值 indices
+	if (num_initparam_imgvec != num_images) {
+		
+		vector<Mat> img_subset; //图像的子集 
+		for (size_t i = 0; i < indices.size(); ++i)
+		{	
+			img_subset.push_back(img_vec[indices[i]]);
+		}
+		img_vec = img_subset;   //确信来自同一全景图的图像 重新组成 images
+	}
+
 	Mat img_warped, img_warped_s;
 	Mat dilated_mask, seam_mask, mask, mask_warped;
 	Ptr<Blender> blender;
@@ -471,11 +500,14 @@ cv::Mat Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec) {
 	}
 	if (!timelapse)
 	{
-		Mat result, result_mask;
-		blender->blend(result, result_mask);
-
+		// Mat result, result_mask;
+		// blender->blend(result, result_mask);
+		Mat result_mask;
+		blender->blend(img_stitch, result_mask);
+		
+		return 0;
 		// imwrite(result_name, result);
-		return result;
+		// return result;
 	}
 	
 }

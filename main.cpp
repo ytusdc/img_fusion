@@ -68,11 +68,11 @@ int main(int argc, char* argv[])
 	path_vec.push_back(path_16);
 	img_vec.push_back(img_16);
 
-	path_vec.push_back(path_17);
-	img_vec.push_back(img_17);
+	// path_vec.push_back(path_17);
+	// img_vec.push_back(img_17);
 
-	path_vec.push_back(path_18);
-	img_vec.push_back(img_18);
+	// path_vec.push_back(path_18);
+	// img_vec.push_back(img_18);
 
 
 
@@ -80,7 +80,13 @@ int main(int argc, char* argv[])
 
 	auto start_init = std::chrono::high_resolution_clock::now();
 
-	stitch_custom->initStitchParam(path_vec);
+	int ret;
+	ret = stitch_custom->initStitchParam(path_vec);
+
+	if(ret != 0) {
+		std::cout<< "无法拼接, 出现错误, 请根据log检查" << std::endl;
+		return -1;
+	}
 
 
 	auto end_init = std::chrono::high_resolution_clock::now();
@@ -92,12 +98,17 @@ int main(int argc, char* argv[])
 
 	int count = 3;
 
-	cv::Mat result;
+	cv::Mat result_stitch;
 
 	for (int i=0; i <= count; i++) {
 		auto start = std::chrono::high_resolution_clock::now();
 
-		result = stitch_custom->beginStitch(img_vec);
+		ret = stitch_custom->beginStitch(img_vec, result_stitch);
+		
+		if(ret != 0) {
+			std::cout<< "拼接报错, 请根据log检查" << std::endl;
+			return 0;
+		}
 
 		auto end = std::chrono::high_resolution_clock::now();
 		std::chrono::duration<double, std::milli> elapsed_stitch = end - start;
@@ -106,7 +117,7 @@ int main(int argc, char* argv[])
 
 		char text_name[256];  
         sprintf(text_name, "result_%d.jpg", i);
-		cv::imwrite(text_name, result);
+		cv::imwrite(text_name, result_stitch);
 
 	}
 

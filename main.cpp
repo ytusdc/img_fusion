@@ -46,12 +46,12 @@ cv::Mat stitch_rotate() {
 
 
     
-    ImgInfo imginfo_1(img_1, 10, 10, 400, 400, 0, 10);
-    ImgInfo imginfo_2(img_2, 100, 100, 640, 480, 50, -10);
-    ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20, 100);
-    ImgInfo imginfo_4(img_4, 0, 0, 300, 200, 20, 15);
-    ImgInfo imginfo_5(img_5, 0, 0, 250, 350, -50, -30);
-    ImgInfo imginfo_6(img_6, 70, 70, 400, 480, -10, -10);
+    ImgInfo imginfo_1(img_1, 10, 10, 400, 400, 0, 0);
+    ImgInfo imginfo_2(img_2, 100, 100, 640, 480, 50, 0);
+    ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20, 0);
+    ImgInfo imginfo_4(img_4, 0, 0, 300, 200, 20, 0);
+    ImgInfo imginfo_5(img_5, 0, 0, 250, 350, -50, 0);
+    ImgInfo imginfo_6(img_6, 70, 70, 400, 480, -10, 0);
 
     std::vector<ImgInfo> imginfo_vec;
 

@@ -74,6 +74,10 @@ class Stitch_Custom {
 
         bool stitch_rotate(std::vector<ImgInfo> imginfo_vec, cv::Mat& img_result);
 
+        void applyCLAHE(Mat& img);
+        void matchBrightness(std::vector<ImgInfo>& imginfo_vec);
+        float calculateAverageBrightness(const Mat& img);
+
     public:
  
         int down_offset_sum = 0;

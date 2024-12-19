@@ -12,11 +12,21 @@ int main(int argc, char *argv[])
     Mat left_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/left.jpg", 1);    //左图
     Mat right_img = imread("/home/ytusdc/codes_zkyc/img_fusion/images/right.jpg", 1);    //右图
 
+
+    // Mat left_img = imread("/home/ytusdc/fusion_test/1_resize/resize_14.jpg", 1);    //左图
+    // Mat right_img = imread("/home/ytusdc/fusion_test/1_resize/resize_15.jpg", 1);    //右图
+
     // cv::Mat mat_dst = stitching_orb(left_img, right_img);
 
     // cv::Mat mat_surf = stitching_orb(left_img, right_img);
 
-      cv::Mat mat_surf = stitching_sift(left_img, right_img);
+    // cv::Mat mat_surf = stitching_surf(left_img, right_img);
+
+
+     cv::Mat mat_surf = stitching_orb(left_img, right_img);
+
+
+
 
     
 

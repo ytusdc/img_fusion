@@ -32,7 +32,8 @@ include_directories(${INCLUDE_DIRS})
 add_executable(${PROJECT_NAME}
         main.cpp
         include/common.cpp
-        include/stitching.cpp
+        include/stitch_surf.cpp
+        include/stitch_orb.cpp
         )
 
 # 将链接目录添加到target

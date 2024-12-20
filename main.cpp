@@ -58,8 +58,8 @@ int main(int argc, char* argv[])
 	// img_vec.push_back(img_12);
 	// init_img_vec.push_back(img_12);
 
-	// img_vec.push_back(img_13);
-	// init_img_vec.push_back(img_13);
+	img_vec.push_back(img_13);
+	init_img_vec.push_back(img_13);
 
     img_vec.push_back(img_14);
 	init_img_vec.push_back(img_14);
@@ -73,8 +73,8 @@ int main(int argc, char* argv[])
     img_vec.push_back(img_17);
 	init_img_vec.push_back(img_17);
 
-    // img_vec.push_back(img_18);
-	// init_img_vec.push_back(img_18);
+    img_vec.push_back(img_18);
+	init_img_vec.push_back(img_18);
 
 
     string path = "./img_test/*.jpg";
@@ -104,7 +104,7 @@ int main(int argc, char* argv[])
 
 	std::cout<< "******************" << std::endl;
 
-	int count = 0;
+	int count = 1000;
 
 	cv::Mat result_stitch;
 
@@ -124,7 +124,8 @@ int main(int argc, char* argv[])
 		std::cout << "stitch程序耗时: " << elapsed_stitch.count() << " ms" << std::endl;
 
 		char text_name[256];  
-        sprintf(text_name, "result_%d.jpg", i);
+        // sprintf(text_name, "result_%d.jpg", i);
+           sprintf(text_name, "result_0.jpg", i);
 		cv::imwrite(text_name, result_stitch);
 
 	}

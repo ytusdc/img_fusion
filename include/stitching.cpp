@@ -518,6 +518,9 @@ int Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch
 */
 void Stitch_Custom::get_vec(std::string file_path, std::vector<cv::Mat>& init_img_vec, std::vector<cv::Mat>& img_vec) {
 
+	init_img_vec.clear();
+	img_vec.clear();
+
 	vector<string> img_names;
 	glob(file_path, img_names, false);
 	size_t num_images = img_names.size();

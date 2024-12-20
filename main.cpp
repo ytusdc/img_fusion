@@ -12,21 +12,13 @@
 #include "include/common.hpp"
 #include "include/stitching.hpp"
 
+
 using namespace std;
 using namespace cv;
 using namespace stitch_temp;
 
-int main(int argc, char* argv[])
-{	
-	// string file_path = "./images/3/*.jpg";
-
-
-    // // string file_path = "./img_test";
-	// stitch_temp::stitch_v2(file_path);
-
-    // return 0;
-
-	string path_10 = "./img_test/resize_10.jpg";
+int begint_stitch() {
+		string path_10 = "./img_test/resize_10.jpg";
 	string path_11 = "./img_test/resize_11.jpg";
 	string path_12 = "./img_test/resize_12.jpg";
 	string path_13 = "./img_test/resize_13.jpg";
@@ -83,7 +75,7 @@ int main(int argc, char* argv[])
     auto stitch_custom = new Stitch_Custom();
 
 
-    // stitch_custom->get_vec(path, init_img_vec, img_vec);
+    stitch_custom->get_vec(path, init_img_vec, img_vec);
 
 
 	auto start_init = std::chrono::high_resolution_clock::now();
@@ -104,7 +96,7 @@ int main(int argc, char* argv[])
 
 	std::cout<< "******************" << std::endl;
 
-	int count = 1000;
+	int count = 0;
 
 	cv::Mat result_stitch;
 
@@ -129,6 +121,19 @@ int main(int argc, char* argv[])
 		cv::imwrite(text_name, result_stitch);
 
 	}
-
 	return 0;
+
+}
+
+
+int main(int argc, char* argv[])
+{	
+	string file_path = "./img_test/*.jpg";
+
+
+    // string file_path = "./img_test";
+	// stitch_temp::stitch_v1(file_path);
+	stitch_offical(file_path);
+
+    return 0;
 }

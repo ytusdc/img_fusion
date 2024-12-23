@@ -8,6 +8,8 @@
 #include <string>
 
 #include "stitching.hpp"
+#include <opencv2/xfeatures2d.hpp>
+#include <opencv2/features2d.hpp> 
 
 
 int Stitch_Custom::initStitchParam(std::vector<cv::Mat> img_vec) {
@@ -33,7 +35,11 @@ int Stitch_Custom::initStitchParam(std::vector<cv::Mat> img_vec) {
 
 	// Ptr<Feature2D> finder = xfeatures2d::SIFT::create();
 
-	Ptr<Feature2D> finder = cv::SIFT::create();
+	// Ptr<Feature2D> finder = cv::SIFT::create();
+	Ptr<Feature2D> finder = cv::ORB::create();
+
+	// Ptr<Feature2D>  finder =  SurfFeatureDetector::create();
+
 	//用数组存储所有的图片以及图片的特征点、尺寸
 	Mat full_img, img;
 	vector<ImageFeatures> features(num_images);  //声明一个初始大小为num_images的ImageFeatures
@@ -82,7 +88,12 @@ int Stitch_Custom::initStitchParam(std::vector<cv::Mat> img_vec) {
 	// vector<int> indices = leaveBiggestComponent(features, pairwise_matches, conf_thresh);
 
 
-	indices = leaveBiggestComponent(features, pairwise_matches, conf_thresh);
+	// indices = leaveBiggestComponent(features, pairwise_matches, conf_thresh);
+
+	for (int i=0; i < num_images; i++) {
+		indices.push_back(i);
+	}
+
 
 	vector<Mat> img_subset; //图像的子集 
 	vector<String> img_names_subset;  //图像名字的子集
@@ -365,6 +376,7 @@ int Stitch_Custom::initStitchParam(std::vector<cv::Mat> img_vec) {
 
 int Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch) {
 
+	cout << "enter beginStitch \n"; 
 
 	if (img_vec.size() != num_initparam_imgvec) {
 		std::cout<< "传入图片数量, 必须和初始化参数中图片数量相同，且一一对应"<<std::endl;

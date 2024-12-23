@@ -83,7 +83,7 @@ int stitch_v1(string filepath)
 		cameras[i].R = R;
 		cout << "camera #" << i + 1 << ":\n内参数矩阵K:\n" << cameras[i].K() << "\n旋转矩阵R:\n" << cameras[i].R << "\n焦距focal: " << cameras[i].focal << endl;
 	}
-	cout << endl;
+	cout << "end 预估相机参数" << endl;
  
 	//光束平差，精确相机参数
 	Ptr<detail::BundleAdjusterBase> adjuster;

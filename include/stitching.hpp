@@ -29,6 +29,7 @@
 using namespace cv;
 using namespace std;
 using namespace cv::detail;
+using namespace cv::xfeatures2d;
 
 /*
 	通过 initStitchParam 传入图片，先将特征提取、匹配、变换矩阵计算等步骤归为初始化部分，

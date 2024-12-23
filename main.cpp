@@ -132,8 +132,10 @@ int main(int argc, char* argv[])
 
 
     // string file_path = "./img_test";
-	// stitch_temp::stitch_v1(file_path);
-	stitch_offical(file_path);
+	stitch_temp::stitch_v1(file_path);
+	// stitch_offical(file_path);
+
+	// begint_stitch();
 
     return 0;
 }

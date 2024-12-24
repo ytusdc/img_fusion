@@ -21,7 +21,7 @@ using namespace std;
                 );
 */
 
-cv::Mat stitch_rotate() {
+bool stitch_rotate() {
 
 	string front_path = "./images/resize_10.jpg";       // 前
     string right_front_path = "./images/resize_12.jpg"; // 右前 
@@ -46,15 +46,14 @@ cv::Mat stitch_rotate() {
 
 
     
-    ImgInfo imginfo_1(img_1, 10, 10, 400, 400, 0, 0);
-    ImgInfo imginfo_2(img_2, 100, 100, 640, 480, 50, 0);
+    ImgInfo imginfo_1(img_1, 0, 0, 400, 400, 0, 0);
+    ImgInfo imginfo_2(img_2, 0, 0, 400, 400, 0, 0);
     ImgInfo imginfo_3(img_3, 20, 20, 340, 480, 20, 0);
     ImgInfo imginfo_4(img_4, 0, 0, 300, 200, 20, 0);
     ImgInfo imginfo_5(img_5, 0, 0, 250, 350, -50, 0);
     ImgInfo imginfo_6(img_6, 70, 70, 400, 480, -10, 0);
 
     std::vector<ImgInfo> imginfo_vec;
-
     imginfo_vec.push_back(imginfo_1);
     imginfo_vec.push_back(imginfo_2);
     imginfo_vec.push_back(imginfo_3);
@@ -62,53 +61,79 @@ cv::Mat stitch_rotate() {
     imginfo_vec.push_back(imginfo_5);
     imginfo_vec.push_back(imginfo_6);
 
-	auto  stitch_cls = new Stitch_Custom();
+    /*
+        Stitch_Custom 初始化的三个参数，按顺序
+        30 -  blur_width: 拼缝处模糊宽度（像素），其中一边的宽度
+        0  -  weight_edge: 模糊宽度的边缘（远离拼缝处）的黑色像素权重，取值（0-1），对应百分比0-100%
+        0.9 - weight_middle: 模糊宽度的中间（拼缝处）的黑色像素权重，取值（0-1）， 对应百分比0-100%
+    */
+
+	auto  stitch_cls = new Stitch_Custom(30, 0, 0.9);
 	cv::Mat result;
 
+    // 旋转+裁剪+模糊接缝
     bool ret = stitch_cls->stitch_rotate(imginfo_vec, result);
 
-	if (ret) {
-		imwrite("result.jpg", result);
-	}else {
+    
+	if (!ret) {
 		std::cout<< "error, please check" << std::endl;
 		std::exit(EXIT_FAILURE);
+        return false;
 	}
-    return result;
+
+    /*****************************************************************/
+
+    // 裁剪图片
+    cv::Point top_left(0, 40);     // 裁剪图片的左上角
+    cv::Point bottom_right(1000, 460);  // 裁剪图片的右下角
+
+    cv::Mat result_crop;
+    ret = stitch_cls->crop_image(top_left, bottom_right, result, result_crop);
+    if(!ret) {
+        std::cout<< "crop image error, please check" << std::endl;
+        return false;
+    }
+
+    cv::imwrite("result_crop.jpg", result_crop);
+    return true;
 }
 
 
 int main(int argc, char *argv[])
 {
-    cv::Mat result_mat = stitch_rotate();
+    int result = stitch_rotate();
 
 
-    // 以下部分是裁剪拼接的图像部分，如不需要可以注释掉
-    // 裁剪坐标不要超过图片边界，否则会报错
     
-    // 裁剪位置的左上角坐标
-    int top_left_x=0;
-    int top_left_y=0;
-    //裁剪位置的右下角坐标
-    int bottom_right_x=0; 
-    int bottom_right_y=0;
 
-    if (top_left_x==0 && top_left_y==0 && bottom_right_x==0 && bottom_right_y==0){
-        return 0;
-    }
+    // // 以下部分是裁剪拼接的图像部分，如不需要可以注释掉
+    // // 裁剪坐标不要超过图片边界，否则会报错
+    
+    // // 裁剪位置的左上角坐标
+    // int top_left_x=0;
+    // int top_left_y=0;
+    // //裁剪位置的右下角坐标
+    // int bottom_right_x=0; 
+    // int bottom_right_y=0;
 
-    int crop_width = bottom_right_x - top_left_x;
-    int crop_height = bottom_right_y - top_left_y;
+    // if (top_left_x==0 && top_left_y==0 && bottom_right_x==0 && bottom_right_y==0){
+    //     imwrite("result_no_crop.jpg", result_mat);
+    //     return 0;
+    // }
 
-    cv::Rect roi(top_left_x, top_left_y, crop_width, crop_height);
-        // 检查矩形是否超出图像边界
-    if (roi.x + roi.width > result_mat.cols || roi.y + roi.height > result_mat.rows) {
-        throw std::invalid_argument("The ROI is out of the image bounds!");
-    }
+    // int crop_width = bottom_right_x - top_left_x;
+    // int crop_height = bottom_right_y - top_left_y;
 
-    // img = image;
-    // croppedImage, 根据矩形区域创建ROI
-    cv::Mat crop_img = result_mat(roi).clone(); // 使用.clone()创建独立副本
-    imwrite("result_crop.jpg", crop_img);
+    // cv::Rect roi(top_left_x, top_left_y, crop_width, crop_height);
+    //     // 检查矩形是否超出图像边界
+    // if (roi.x + roi.width > result_mat.cols || roi.y + roi.height > result_mat.rows) {
+    //     throw std::invalid_argument("The ROI is out of the image bounds!");
+    // }
+
+    // // img = image;
+    // // croppedImage, 根据矩形区域创建ROI
+    // cv::Mat crop_img = result_mat(roi).clone(); // 使用.clone()创建独立副本
+    // imwrite("result_crop.jpg", crop_img);
     return 0;
 }
 

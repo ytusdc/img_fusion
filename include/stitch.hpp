@@ -56,7 +56,7 @@ struct ImgInfo {
 
 class Stitch_Custom {
     public:
-        explicit Stitch_Custom(){};
+        explicit Stitch_Custom(int blur_width=0, double weight_edge=0, double weight_middle=0);
         ~Stitch_Custom(){};
     public:
         cv::Mat stitch(cv::Mat front, 
@@ -77,6 +77,8 @@ class Stitch_Custom {
         void applyCLAHE(Mat& img);
         void matchBrightness(std::vector<ImgInfo>& imginfo_vec);
         float calculateAverageBrightness(const Mat& img);
+        void OptimizeSeam(Mat& img1, Mat& dst);
+        bool crop_image(cv::Point top_left, cv::Point bottom_right, cv::Mat& src_img, cv::Mat& result_img);
 
     public:
  
@@ -84,6 +86,13 @@ class Stitch_Custom {
         int offset_sum = 0;
         int max_height = 0;  // 以第一张图片左上角x为标准，加入偏移后的图片高度
         int sum_width = 0;   // 最终拼接后的图片宽度
+
+        const double m_epsilon = 1e-9;
+        bool m_is_blur = false;  // 是否模糊处理
+        int m_blur_width = 0;  // 模糊处理宽度（一边的宽度），两边宽度是 2*m_blur_width
+        double m_begin_weight = 0; //边缘处开始的概率值
+        double m_end_weight = 0;   //接缝处的概率值
+        vector<int> m_join_line_vec;
 };
 
 #endif //STITCH_H_

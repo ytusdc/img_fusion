@@ -6,6 +6,34 @@
 #include <numeric>
 using namespace cv;
 
+/*
+    blur_width: 拼缝处模糊宽度（像素），其中一边的宽度
+    weight_edge: 模糊宽度的边缘（远离拼缝处）的黑色像素权重，取值（0-1），对应百分比0-100%
+    weight_middle: 模糊宽度的中间（拼缝处）的黑色像素权重，取值（0-1）， 对应百分比0-100%
+*/
+Stitch_Custom::Stitch_Custom(int blur_width, double weight_edge, double weight_middle) {
+    if (blur_width == 0) {
+        m_is_blur = false;
+    } else {
+        if (weight_edge < 0 | weight_middle < 0) {
+            std::cout<< "概率值不能小于0" << std::endl;
+            m_is_blur = false;
+        }
+        else if (weight_edge < m_epsilon && weight_middle < m_epsilon ) {
+            //概率值都为0则不进行模糊化
+            m_is_blur = false;
+        } 
+        else {
+            m_is_blur = true;
+            m_begin_weight = weight_edge;
+            m_end_weight = weight_middle;
+        }
+    }
+
+    m_blur_width = blur_width;
+    
+}
+
 cv::Mat Stitch_Custom::stitch(
             cv::Mat front, 
             cv::Mat right_front,
@@ -160,9 +188,22 @@ bool Stitch_Custom::rotate(ImgInfo& image_info) {
 
 bool Stitch_Custom::stitch_rotate(std::vector<ImgInfo> imginfo_vec, cv::Mat& img_result) {
 
+    // vector<int> join_line_vec;
+    m_join_line_vec.clear();
     int count = 0;
     bool ret;
+
+    int join_line_accum = 0;
+    for (int i=0; i<imginfo_vec.size(); i++) {
+        if (i != (imginfo_vec.size()-1)) {
+            int value = imginfo_vec[i].bottom_right.x - imginfo_vec[i].top_left.x;
+            join_line_accum += value;
+            // std::cout<< join_line_accum << std::endl;
+            m_join_line_vec.push_back(join_line_accum);
+        }
+    }
     for (auto& imginfo : imginfo_vec) {
+
         ret = this->rotate(imginfo);
         if (!ret) {
             std::cout<< "图片裁剪区域超出图片边界，定位到图片：" << count+1 << std::endl;
@@ -177,8 +218,9 @@ bool Stitch_Custom::stitch_rotate(std::vector<ImgInfo> imginfo_vec, cv::Mat& img
     }
 
     matchBrightness(imginfo_vec);
-
-    img_result = this->stitch_hard(imginfo_vec);
+    cv::Mat img_src = this->stitch_hard(imginfo_vec);
+    img_result = img_src.clone();
+    this->OptimizeSeam(img_src, img_result);
     return true;
 }
 
@@ -230,4 +272,72 @@ void Stitch_Custom::matchBrightness(std::vector<ImgInfo>& imginfo_vec) {
         imginfo_vec[i].img_crop.convertTo(adjusted, -1, 1, delta);
         imginfo_vec[i].img_crop = adjusted;
     }
+}
+
+
+
+//优化两图的连接处，使得拼接自然
+void Stitch_Custom::OptimizeSeam(Mat& img1, Mat& dst)
+{   
+    if (!m_is_blur) {
+        return;
+    }
+
+    int rows = dst.rows;
+    int cols = img1.cols; //注意，是列数*通道数
+    // double alpha = 1;//img1中像素的权重
+
+    float interval_value = (this->m_end_weight - this->m_begin_weight) / this->m_blur_width; 
+
+    for (auto join_line: m_join_line_vec) 
+    {
+        for (int i = 0; i < rows; i++)
+        {
+            uchar* p = img1.ptr<uchar>(i);  //获取第i行的首地址
+            // uchar* t = trans.ptr<uchar>(i);
+            uchar* d = dst.ptr<uchar>(i);
+            for (int j = 0; j <= this->m_blur_width; j++)
+            {   
+                double weight = m_begin_weight + interval_value * (this->m_blur_width - j);  // 黑色像素的权重
+
+                // weight = 0.3;
+                int col_left = join_line - j;
+                int col_right = join_line + j;
+
+                if (j == 0) {
+                    d[col_left * 3] = p[col_left * 3] * (1 - weight) + 0 * weight;
+                    d[col_left * 3 + 1] = p[col_left * 3 + 1] * (1 - weight) + 0 * weight;
+                    d[col_left * 3 + 2] = p[col_left * 3 + 2] * (1 - weight) + 0 * weight;
+                } else {
+                    d[col_left * 3] = p[col_left * 3] * (1 - weight) + 0 * weight;
+                    d[col_left * 3 + 1] = p[col_left * 3 + 1] * (1 - weight) + 0 * weight;
+                    d[col_left * 3 + 2] = p[col_left * 3 + 2] * (1 - weight) + 0 * weight;
+
+                    d[col_right * 3] = p[col_right * 3] * (1 - weight) + 0 * weight;
+                    d[col_right * 3 + 1] = p[col_right * 3 + 1] * (1 - weight) + 0 * weight;
+                    d[col_right * 3 + 2] = p[col_right * 3 + 2] * (1 - weight) + 0 * weight;
+                }
+            }
+        }
+    }
+}
+
+
+bool Stitch_Custom::crop_image(cv::Point top_left, cv::Point bottom_right, cv::Mat& src_img, cv::Mat& result_img) {
+
+    // int crop_width = bottom_right.x - top_left.x;
+    // int crop_height = bottom_right.y - top_left.y;
+
+    cv::Rect roi_rect(top_left, bottom_right);
+        // 检查矩形是否超出图像边界
+    if (roi_rect.x + roi_rect.width > src_img.cols || roi_rect.y + roi_rect.height > src_img.rows) {
+        // throw std::invalid_argument("The ROI is out of the image bounds!");
+        std::cout<< "The ROI is out of the image bounds!" << std::endl;
+        return false;
+    }
+
+    // img = image;
+    // croppedImage, 根据矩形区域创建ROI
+    result_img = src_img(roi_rect).clone(); // 使用.clone()创建独立副本
+    return true;
 }

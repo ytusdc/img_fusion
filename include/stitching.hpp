@@ -49,7 +49,8 @@ public:
 	int initStitchParam(std::vector<cv::Mat> img_path_vec);
 	int beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch);
 
-	void get_vec(string file_path, std::vector<cv::Mat>& init_img_vec, std::vector<cv::Mat>& img_vec);
+	void get_img_vec(string file_path, std::vector<cv::Mat>& img_vec);
+	cv::Mat resize_img(cv::Mat ori_img, int resize_width=640);
 
 
 public:

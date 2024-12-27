@@ -516,25 +516,50 @@ int Stitch_Custom::beginStitch(std::vector<cv::Mat> img_vec, cv::Mat& img_stitch
 
 方便获取文件夹下所有的图片并读取
 */
-void Stitch_Custom::get_vec(std::string file_path, std::vector<cv::Mat>& init_img_vec, std::vector<cv::Mat>& img_vec) {
+void Stitch_Custom::get_img_vec(std::string file_path, std::vector<cv::Mat>& img_vec) {
 
-	init_img_vec.clear();
 	img_vec.clear();
 
-	vector<string> img_names;
-	glob(file_path, img_names, false);
-	size_t num_images = img_names.size();
-
-	init_img_vec.resize(num_images);
+	vector<string> img_file_vec;
+	glob(file_path, img_file_vec, false);
+	size_t num_images = img_file_vec.size();
 	img_vec.resize(num_images);
-
 	cv::Mat img;
 	for (int i = 0; i < num_images; ++i)
 	{	
-		img = imread(samples::findFile(img_names[i]));
-		init_img_vec[i] = img.clone();
+		// img = imread(samples::findFile(img_file_vec[i]));
+		img = this->resize_img(imread(samples::findFile(img_file_vec[i])));
 		img_vec[i] = img.clone();
 
+
+		char text_name[256];  
+        // sprintf(text_name, "result_%d.jpg", i);
+        sprintf(text_name, "resize_%d.jpg", i);
+		cv::imwrite(text_name, img);
+
+	}
+}
+
+
+cv::Mat Stitch_Custom::resize_img(cv::Mat ori_img, int resize_width) {
+
+	int resize_height;
+    int ori_width = ori_img.cols;
+    int ori_height = ori_img.rows;
+	
+	if(ori_width <= resize_width){
+		return ori_img;
+	}
+	else {
+		float ratio = float(resize_width) / float(ori_width);
+		resize_height = int(ori_height * ratio);
+
+		cv::Mat resize_img;
+		// 调整图像大小
+    	cv::resize(ori_img, resize_img, cv::Size(resize_width, resize_height), 0, 0, cv::INTER_LINEAR);
+		std::cout<< "(w, h) = (" << resize_width << ", " << resize_height << ")" << std::endl;
+		return resize_img;
 	}
 
+	
 }

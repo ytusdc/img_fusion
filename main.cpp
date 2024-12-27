@@ -18,7 +18,8 @@ using namespace cv;
 using namespace stitch_temp;
 
 int begint_stitch() {
-		string path_10 = "./img_test/resize_10.jpg";
+
+	string path_10 = "./img_test/resize_10.jpg";
 	string path_11 = "./img_test/resize_11.jpg";
 	string path_12 = "./img_test/resize_12.jpg";
 	string path_13 = "./img_test/resize_13.jpg";
@@ -68,16 +69,7 @@ int begint_stitch() {
     img_vec.push_back(img_18);
 	init_img_vec.push_back(img_18);
 
-
-    string path = "./img_test/*.jpg";
-
-
     auto stitch_custom = new Stitch_Custom();
-
-
-    stitch_custom->get_vec(path, init_img_vec, img_vec);
-
-
 	auto start_init = std::chrono::high_resolution_clock::now();
 
 	int ret;
@@ -88,18 +80,13 @@ int begint_stitch() {
 		return -1;
 	}
 
-
 	auto end_init = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<double, std::milli> elapsed_init = end_init - start_init;
 	// 输出结果
 	std::cout << "init程序耗时: " << elapsed_init.count() << " ms" << std::endl;
-
 	std::cout<< "******************" << std::endl;
-
 	int count = 0;
-
 	cv::Mat result_stitch;
-
 	for (int i=0; i <= count; i++) {
 		auto start = std::chrono::high_resolution_clock::now();
 
@@ -117,7 +104,7 @@ int begint_stitch() {
 
 		char text_name[256];  
         // sprintf(text_name, "result_%d.jpg", i);
-           sprintf(text_name, "result_0.jpg", i);
+        sprintf(text_name, "result_0.jpg", i);
 		cv::imwrite(text_name, result_stitch);
 
 	}
@@ -125,15 +112,59 @@ int begint_stitch() {
 
 }
 
+int begint_stitch_v2(string path) {
+    std::vector<cv::Mat> init_img_vec;
+    auto stitch_custom = new Stitch_Custom();
+    stitch_custom->get_img_vec(path, init_img_vec);
+	auto start_init = std::chrono::high_resolution_clock::now();
+
+	int ret;
+	ret = stitch_custom->initStitchParam(init_img_vec);
+	if(ret != 0) {
+		std::cout<< "无法拼接, 出现错误, 请根据log检查" << std::endl;
+		return -1;
+	}
+
+	auto end_init = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<double, std::milli> elapsed_init = end_init - start_init;
+	// 输出结果
+	std::cout << "init程序耗时: " << elapsed_init.count() << " ms" << std::endl;
+	std::cout<< "******************" << std::endl;
+
+	int count = 0;
+	cv::Mat result_stitch;
+	for (int i=0; i <= count; i++) {
+		auto start = std::chrono::high_resolution_clock::now();
+		ret = stitch_custom->beginStitch(init_img_vec, result_stitch);
+		if(ret != 0) {
+			std::cout<< "拼接报错, 请根据log检查" << std::endl;
+			return 0;
+		}
+
+		auto end = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> elapsed_stitch = end - start;
+		// 输出结果
+		std::cout << "stitch程序耗时: " << elapsed_stitch.count() << " ms" << std::endl;
+
+		char text_name[256];  
+        // sprintf(text_name, "result_%d.jpg", i);
+        sprintf(text_name, "result_0.jpg", i);
+		cv::imwrite(text_name, result_stitch);
+
+	}
+    return 0;
+}
+
 
 int main(int argc, char* argv[])
 {	
 	string file_path = "./img_test/*.jpg";
 
-
     // string file_path = "./img_test";
 	// stitch_temp::stitch_v1(file_path);
-	stitch_offical(file_path);
+	// stitch_offical(file_path);
+
+    begint_stitch_v2(file_path);
 
     return 0;
 }

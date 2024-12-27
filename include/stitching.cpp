@@ -532,11 +532,10 @@ void Stitch_Custom::get_img_vec(std::string file_path, std::vector<cv::Mat>& img
 		img_vec[i] = img.clone();
 
 
-		char text_name[256];  
-        // sprintf(text_name, "result_%d.jpg", i);
-        sprintf(text_name, "resize_%d.jpg", i);
-		cv::imwrite(text_name, img);
-
+		// char text_name[256];  
+        // // sprintf(text_name, "result_%d.jpg", i);
+        // sprintf(text_name, "resize_%d.jpg", i);
+		// cv::imwrite(text_name, img);
 	}
 }
 
